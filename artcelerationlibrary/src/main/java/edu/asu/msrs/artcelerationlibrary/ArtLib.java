@@ -1,16 +1,55 @@
 package edu.asu.msrs.artcelerationlibrary;
 
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.os.IBinder;
+import android.os.MemoryFile;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
+import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+//import edu.asu.msrs.artcelerationlibrary.MyArtTransService;
 /**
  * Created by rlikamwa on 10/2/2016.
  */
 
 public class ArtLib {
+    String TAG = "ArtLib";
     private TransformHandler artlistener;
+    private Activity objActivity;
+    public ArtLib(Activity activity){
+        objActivity = activity;
+        startUp();
+    }
+    private Messenger objMess;
+    private boolean objBound;
+    ServiceConnection objeServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            objMess = new Messenger(service);
+            objBound = true;
 
-    public ArtLib(){
+        }
 
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            objMess = null;
+            objBound = false;
+        }
+    };
+
+    public void startUp(){
+        objActivity.bindService(new Intent(objActivity, MyArtTransService.class), objeServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     public String[] getTransformsArray(){
@@ -32,6 +71,26 @@ public class ArtLib {
     }
 
     public boolean requestTransform(Bitmap img, int index, int[] intArgs, float[] floatArgs){
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        img.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+        byte[] byteStreamArray = byteStream.toByteArray();
+        Log.d(TAG,String.valueOf(byteStreamArray.length));
+        try {
+            MemoryFile objMemoryFile = new MemoryFile("Filename",30);
+            ParcelFileDescriptor pfd = MemoryFileUtil.getParcelFileDescriptor(objMemoryFile);
+            int what = MyArtTransService.MSG_1;
+            Bundle bundleData = new Bundle();
+            bundleData.putParcelable("pfd",pfd);
+            Message newMsg = Message.obtain(null, what,4,5);
+            newMsg.setData(bundleData);
+        try {
+            objMess.send(newMsg);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return true;
     }
 
