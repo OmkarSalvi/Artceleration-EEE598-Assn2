@@ -76,12 +76,16 @@ public class ArtLib {
         byte[] byteStreamArray = byteStream.toByteArray();
         Log.d(TAG,String.valueOf(byteStreamArray.length));
         try {
-            MemoryFile objMemoryFile = new MemoryFile("Filename",30);
+            MemoryFile objMemoryFile = new MemoryFile("MemoryFileObject",byteStreamArray.length);
+            objMemoryFile.writeBytes(byteStreamArray,0,0, byteStreamArray.length);
+
             ParcelFileDescriptor pfd = MemoryFileUtil.getParcelFileDescriptor(objMemoryFile);
             int what = MyArtTransService.MSG_1;
             Bundle bundleData = new Bundle();
             bundleData.putParcelable("pfd",pfd);
-            Message newMsg = Message.obtain(null, what,4,5);
+
+            Message newMsg = Message.obtain(null, what, byteStreamArray.length,0);
+
             newMsg.setData(bundleData);
         try {
             objMess.send(newMsg);
