@@ -35,6 +35,7 @@ public class MyArtTransService extends Service {
                     break;
                 case MSG_2:
                     Log.d(TAG, "2----");
+                    Log.d(TAG,"Testing branch");
                     break;
                 default:
                     break;
