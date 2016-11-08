@@ -1,3 +1,9 @@
+/**
+ * Library to perform necessary operations invoked from application
+ * Library will perform various operations such as getTransform, registerHandler, requestTransform
+ * RequestTransform will pass all data created from arguments such as index, bitmap, etc. to service
+ * Service will create thread for creation of transformed image in corresponding transform class
+ */
 package edu.asu.msrs.artcelerationlibrary;
 
 import android.Manifest;
@@ -8,8 +14,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -30,11 +34,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-//import edu.asu.msrs.artcelerationlibrary.MyArtTransService;
 /**
  * Created by rlikamwa on 10/2/2016.
  */
@@ -46,6 +47,8 @@ public class ArtLib {
     private Activity objActivity;
     private Bitmap resultBitmap = null;
     private boolean boolBound;
+    public static int globalRequestId = 0;
+    ConcurrentLinkedQueue<Integer> artLibQueue = new ConcurrentLinkedQueue<Integer>();
     /**
      * Variables to check file permissions for API 23+
      */
@@ -72,7 +75,9 @@ public class ArtLib {
     }
 
     /**
+     * For future use
      * Helper to request file permissions at run time
+     * Helper will prompt user to get storage permissions on device
      *
      * @param activity : object of current Activity
      */
@@ -84,12 +89,20 @@ public class ArtLib {
     }
 
     /**
-     * Handler class to handle response messages from service
+     * Handler class to handle response messages from service named MyArtTransService
      */
     class ArtLibIncomingHandler extends Handler{
+        /**
+         * Helper to handle messages received from service
+         * @param resultMsg: Message object received from service MyArtTransService
+         */
         @Override
         public void handleMessage(Message resultMsg){
 
+            /**
+             * Create object of artLibThread class to perform operations on the message received from service
+             * Create thread for every message and perform transform
+             */
             artLibThread objartLibThread = new artLibThread(resultMsg.arg1, resultMsg.arg2, resultMsg.getData(), artLibQueue, artlistener);
             new Thread(objartLibThread).start();
 
@@ -162,15 +175,27 @@ public class ArtLib {
         }
     };
 
+    /**
+     * Helper to bind service with the activity
+     */
     public void startUp(){
         objActivity.bindService(new Intent(objActivity, MyArtTransService.class), objServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
+    /**
+     * Helper to create string transform array
+     *
+     * @return Transform: String array which defines provided transform
+     */
     public String[] getTransformsArray(){
         String[] transforms = {"Gaussian Blur", "Neon edges", "Color Filter", "Edge detection", "ASCII transform"};
         return transforms;
     }
 
+    /**
+     * Helper to get transformtest array
+     * @return TransformTest: Transform array which defines index, integer argument and float argument
+     */
     public TransformTest[] getTestsArray(){
         TransformTest[] transforms = new TransformTest[5];
         transforms[0]=new TransformTest(0, new int[]{1,2,3}, new float[]{0.1f, 0.2f, 0.3f});
@@ -183,18 +208,22 @@ public class ArtLib {
 
     public void registerHandler(TransformHandler artlistener){
         this.artlistener=artlistener;
+
     }
-    public static int globalRequestId = 0;
-    ConcurrentLinkedQueue<Integer> artLibQueue = new ConcurrentLinkedQueue<Integer>();
 
     public boolean requestTransform(Bitmap img, int index, int[] intArgs, float[] floatArgs){
 
-        //index = 0;
+        /**
+         * Creating byte array using received bitmap
+         */
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         img.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
         byte[] byteStreamArray = byteStream.toByteArray();
         Log.d(TAG,"length is :"+String.valueOf(byteStreamArray.length));
         try {
+            /**
+             * Binding data to message object using memory file object
+             */
             MemoryFile objMemoryFile = new MemoryFile("MemoryFileObject",byteStreamArray.length);
             objMemoryFile.writeBytes(byteStreamArray,0,0, byteStreamArray.length);
             ParcelFileDescriptor libPFD = MemoryFileUtil.getParcelFileDescriptor(objMemoryFile);
@@ -202,7 +231,13 @@ public class ArtLib {
             Bundle bundleData = new Bundle();
             bundleData.putParcelable("libPFD",libPFD);
             Message newMsg = Message.obtain(null, what, byteStreamArray.length, globalRequestId);
+            /**
+             * Setting the messenger object to library messenger
+             */
             newMsg.replyTo = artLibMessenger;
+            /**
+             * Adding bundle data to message object
+             */
             newMsg.setData(bundleData);
             artLibQueue.add(globalRequestId);
             Log.d(TAG,"globalRequestId: "+globalRequestId);
@@ -215,6 +250,9 @@ public class ArtLib {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        /**
+         * Incrementing the global counter for transform request
+         */
         globalRequestId++;
         return true;
     }

@@ -1,21 +1,19 @@
+/**
+ * This service creates different transform threads on the basis of transform type
+ * For checkpoint-1, we have just created one transform class i.e GaussianBlurTransform
+ * GaussianBlurTransform will process all threads
+ */
+
 package edu.asu.msrs.artcelerationlibrary;
 
 import android.app.Service;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.MemoryFile;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.ParcelFileDescriptor;
-import android.os.RemoteException;
 import android.util.Log;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 /*This service will operate depending on messenegr*/
 
 public class MyArtTransService extends Service {
@@ -23,7 +21,9 @@ public class MyArtTransService extends Service {
     public MyArtTransService() {
     }
     String TAG = "MyArtTransService";
-
+    /**
+     * Options to select transform
+     */
     static final int OPTION_0 = 0;
     static final int OPTION_1 = 1;
     static final int OPTION_2 = 2;
@@ -35,12 +35,28 @@ public class MyArtTransService extends Service {
      */
     final Messenger objMessenger = new Messenger(new MyArtTransServiceHandler());
 
+    /**
+     * Handler class to implement operations on the message received from the Art library
+     */
     class MyArtTransServiceHandler extends Handler{
+        /**
+         * Helper to handle messages received from library
+         * @param objMessage: Message object received from Library
+         */
         @Override
         public void handleMessage(Message objMessage){
+            /**
+             * Logging message variables for debugging
+             */
             Log.d(TAG,"MyArtTransServiceHandler handleMessage" + objMessage.what);
-            Log.d(TAG,"Length inside : "+ objMessage.arg1);
+            Log.d(TAG,"Length inside Service: "+ objMessage.arg1);
             Log.d(TAG,"objmessage : "+ objMessage.what);
+            /**
+             * Creation of threads depending on transform types i.e. index
+             * For example, if the index passed is 0 then GaussianBlurTransform is implemented by creating thread of same class
+             * For checkpoint-1, only GaussianBlurTransform is implemented
+             * Different classes will be created for various transform defined in the transform array in library
+             */
             switch(objMessage.what){
                 case OPTION_0:
                     Log.d(TAG, "OPTION_0");
@@ -68,6 +84,7 @@ public class MyArtTransService extends Service {
                     new Thread(objGBT4).start();
                     break;
                 default:
+                    Log.d(TAG, "Invalid Transform!!");
                     break;
             }
         }
@@ -76,8 +93,7 @@ public class MyArtTransService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         /**
-         * Return the communication channel to the service
-         * returning when someone binds
+         * Return the communication channel to the service when someone binds
          */
         return objMessenger.getBinder();
     }
