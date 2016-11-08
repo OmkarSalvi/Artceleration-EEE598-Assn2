@@ -9,6 +9,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -29,6 +30,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 //import edu.asu.msrs.artcelerationlibrary.MyArtTransService;
 /**
@@ -85,21 +89,10 @@ public class ArtLib {
     class ArtLibIncomingHandler extends Handler{
         @Override
         public void handleMessage(Message resultMsg){
-            int resultSize = resultMsg.arg1;
-            Log.d(TAG, "Result Size: "+resultSize);
-            byte[] resultBuffer = new byte[resultSize];
-            Bundle resultServiceDataBundle = resultMsg.getData();
-            ParcelFileDescriptor resultPFD = (ParcelFileDescriptor)resultServiceDataBundle.getParcelable("objPFD");
-            Log.d(TAG, "Result File descriptor: "+resultPFD);
-            ParcelFileDescriptor.AutoCloseInputStream resultInput = new ParcelFileDescriptor.AutoCloseInputStream(resultPFD);
-            try {
-                resultInput.read(resultBuffer);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            BitmapFactory.Options bitOptions = new BitmapFactory.Options();
-            resultBitmap = BitmapFactory.decodeByteArray(resultBuffer, 0, resultBuffer.length, bitOptions);
-            createProcessedBitmap(resultBitmap);
+
+            artLibThread objartLibThread = new artLibThread(resultMsg.arg1, resultMsg.arg2, resultMsg.getData(), artLibQueue, artlistener);
+            new Thread(objartLibThread).start();
+
         }
     }
 
@@ -191,31 +184,38 @@ public class ArtLib {
     public void registerHandler(TransformHandler artlistener){
         this.artlistener=artlistener;
     }
+    public static int globalRequestId = 0;
+    ConcurrentLinkedQueue<Integer> artLibQueue = new ConcurrentLinkedQueue<Integer>();
 
     public boolean requestTransform(Bitmap img, int index, int[] intArgs, float[] floatArgs){
 
+        //index = 0;
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         img.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
         byte[] byteStreamArray = byteStream.toByteArray();
-        Log.d(TAG,String.valueOf(byteStreamArray.length));
+        Log.d(TAG,"length is :"+String.valueOf(byteStreamArray.length));
         try {
             MemoryFile objMemoryFile = new MemoryFile("MemoryFileObject",byteStreamArray.length);
             objMemoryFile.writeBytes(byteStreamArray,0,0, byteStreamArray.length);
             ParcelFileDescriptor libPFD = MemoryFileUtil.getParcelFileDescriptor(objMemoryFile);
-            int what = MyArtTransService.OPTION_1;
+            int what = index;
             Bundle bundleData = new Bundle();
             bundleData.putParcelable("libPFD",libPFD);
-            Message newMsg = Message.obtain(null, what, byteStreamArray.length,0);
+            Message newMsg = Message.obtain(null, what, byteStreamArray.length, globalRequestId);
             newMsg.replyTo = artLibMessenger;
             newMsg.setData(bundleData);
+            artLibQueue.add(globalRequestId);
+            Log.d(TAG,"globalRequestId: "+globalRequestId);
             try {
                 objServiceMessenger.send(newMsg);
+                Log.d(TAG, "Queue before sending: "+artLibQueue.toString());
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        globalRequestId++;
         return true;
     }
 

@@ -24,11 +24,11 @@ public class MyArtTransService extends Service {
     }
     String TAG = "MyArtTransService";
 
+    static final int OPTION_0 = 0;
     static final int OPTION_1 = 1;
     static final int OPTION_2 = 2;
     static final int OPTION_3 = 3;
     static final int OPTION_4 = 4;
-    static final int OPTION_5 = 5;
 
     /**
      * Messenger object to Handle messages that come in from library
@@ -39,53 +39,33 @@ public class MyArtTransService extends Service {
         @Override
         public void handleMessage(Message objMessage){
             Log.d(TAG,"MyArtTransServiceHandler handleMessage" + objMessage.what);
-
+            Log.d(TAG,"Length inside : "+ objMessage.arg1);
+            Log.d(TAG,"objmessage : "+ objMessage.what);
             switch(objMessage.what){
+                case OPTION_0:
+                    Log.d(TAG, "OPTION_0");
+                    GaussianBlurTransform objGBT0 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    new Thread(objGBT0).start();
+                    break;
                 case OPTION_1:
-                    int byteArraySize = objMessage.arg1;
-                    Log.d(TAG, "Passed size from Library: "+byteArraySize);
-                    byte[] buffer = new byte[byteArraySize];
-                    Bundle serviceDataBundle = objMessage.getData();
-                    ParcelFileDescriptor pfd = (ParcelFileDescriptor)serviceDataBundle.get("libPFD");
-                    ParcelFileDescriptor.AutoCloseInputStream input = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
-                    try {
-                        input.read(buffer);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    //Log.d(TAG, "here"+pfd);
-                    BitmapFactory.Options options = new BitmapFactory.Options();
-                    Bitmap bmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length, options);
-                    Log.d(TAG, String.valueOf(bmp.getByteCount()));
-                    int what;
-                    try {
-                        MemoryFile objMemoryFile = new MemoryFile("MemoryFileObject",buffer.length);
-                        objMemoryFile.writeBytes(buffer,0,0, buffer.length);
-                        ParcelFileDescriptor objPFD = MemoryFileUtil.getParcelFileDescriptor(objMemoryFile);
-                        what = 100;
-                        Bundle bunData = new Bundle();
-                        bunData.putParcelable("objPFD",objPFD);
-                        Message newMsg = Message.obtain(null, what, byteArraySize + 100,0);
-                        Log.d(TAG, "objMessage.replyTo: " + objMessage.replyTo);
-                        Messenger mClient =  objMessage.replyTo;
-                        newMsg.setData(bunData);
-                        try {
-                            mClient.send(newMsg);
-                        } catch (RemoteException e) {
-                            e.printStackTrace();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    Log.d(TAG, "OPTION_1");
+                    GaussianBlurTransform objGBT1 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    new Thread(objGBT1).start();
                     break;
                 case OPTION_2:
-                    Log.d(TAG, "Case 2:");
+                    Log.d(TAG, "OPTION_2");
+                    GaussianBlurTransform objGBT2 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    new Thread(objGBT2).start();
                     break;
                 case OPTION_3:
+                    Log.d(TAG, "OPTION_3");
+                    GaussianBlurTransform objGBT3 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    new Thread(objGBT3).start();
                     break;
                 case OPTION_4:
-                    break;
-                case OPTION_5:
+                    Log.d(TAG, "OPTION_4");
+                    GaussianBlurTransform objGBT4 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    new Thread(objGBT4).start();
                     break;
                 default:
                     break;
@@ -102,3 +82,4 @@ public class MyArtTransService extends Service {
         return objMessenger.getBinder();
     }
 }
+
