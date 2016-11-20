@@ -51,10 +51,8 @@ public class UnsharpMaskTransform implements Runnable {
         /**
          * Unbinding data from the messenger object and bundle
          */
-        Log.d(TAG, "Passed size to thread from service: " + byteArraySize);
         byte[] buffer = new byte[byteArraySize];
         ParcelFileDescriptor pfd = (ParcelFileDescriptor) serviceDataBundle.get("libPFD");
-        //int[] intArgs = (int[]) serviceDataBundle.get("intArray");
         float[] floatArgs = (float[]) serviceDataBundle.get("floatArray");
 
         /**
