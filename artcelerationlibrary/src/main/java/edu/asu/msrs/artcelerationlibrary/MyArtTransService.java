@@ -66,7 +66,8 @@ public class MyArtTransService extends Service {
                 case OPTION_1:
                     Log.d(TAG, "OPTION_1");
                     GaussianBlurTransform objGBT1 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
-                    new Thread(objGBT1).start();
+                    UnsharpMaskTransform objUSM1 = new UnsharpMaskTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo, objGBT1);
+                    new Thread(objUSM1).start();
                     break;
                 case OPTION_2:
                     Log.d(TAG, "OPTION_2");

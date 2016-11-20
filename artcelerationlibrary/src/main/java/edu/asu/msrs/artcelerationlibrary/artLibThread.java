@@ -105,6 +105,8 @@ public class artLibThread implements Runnable {
          */
         artLibThreadQueue.poll();
         Log.d(TAG, "After removing from queue: "+artLibThreadQueue.toString());
+        if(resultBitmap == null)
+            Log.d(TAG, "result bitmap is null");
         transformHandlerListener.onTransformProcessed(resultBitmap);
     }
 }

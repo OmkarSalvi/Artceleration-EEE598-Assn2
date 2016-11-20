@@ -188,7 +188,7 @@ public class ArtLib {
      * @return Transform: String array which defines provided transform
      */
     public String[] getTransformsArray(){
-        String[] transforms = {"Gaussian Blur", "Neon edges", "Color Filter", "Edge detection", "ASCII transform"};
+        String[] transforms = {"Gaussian Blur", "Unsharp Mask", "Color Filter", "Edge detection", "ASCII transform"};
         return transforms;
     }
 
@@ -198,8 +198,8 @@ public class ArtLib {
      */
     public TransformTest[] getTestsArray(){
         TransformTest[] transforms = new TransformTest[5];
-        transforms[0]=new TransformTest(0, new int[]{1,2,3}, new float[]{0.1f, 0.2f, 0.3f});
-        transforms[1]=new TransformTest(1, new int[]{11,22,33}, new float[]{0.3f, 0.2f, 0.3f});
+        transforms[0]=new TransformTest(0, new int[]{50}, new float[]{10.0f});
+        transforms[1]=new TransformTest(1, new int[]{11,22,33}, new float[]{5.0f, 1.5f, 0.3f});
         transforms[2]=new TransformTest(2, new int[]{51,42,33}, new float[]{0.5f, 0.6f, 0.3f});
         transforms[3]=new TransformTest(3, new int[]{61,72,29}, new float[]{0.4f, 0.3f, 0.8f});
         transforms[4]=new TransformTest(4, new int[]{41,82,35}, new float[]{0.7f, 0.2f, 0.5f});
@@ -220,6 +220,8 @@ public class ArtLib {
         img.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
         byte[] byteStreamArray = byteStream.toByteArray();
         Log.d(TAG,"length is :"+String.valueOf(byteStreamArray.length));
+        Log.d(TAG, "int intArgs : "+intArgs[0]);
+        Log.d(TAG, "int floatArgs : "+floatArgs[0]);
         try {
             /**
              * Binding data to message object using memory file object
@@ -230,6 +232,8 @@ public class ArtLib {
             int what = index;
             Bundle bundleData = new Bundle();
             bundleData.putParcelable("libPFD",libPFD);
+            bundleData.putIntArray("intArray",intArgs );
+            bundleData.putFloatArray("floatArray", floatArgs);
             Message newMsg = Message.obtain(null, what, byteStreamArray.length, globalRequestId);
             /**
              * Setting the messenger object to library messenger
