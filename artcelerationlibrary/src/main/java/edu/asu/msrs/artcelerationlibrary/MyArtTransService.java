@@ -71,8 +71,8 @@ public class MyArtTransService extends Service {
                     break;
                 case OPTION_2:
                     Log.d(TAG, "OPTION_2");
-                    GaussianBlurTransform objGBT2 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
-                    new Thread(objGBT2).start();
+                    ColorFilterTransform objCFT = new ColorFilterTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    new Thread(objCFT).start();
                     break;
                 case OPTION_3:
                     Log.d(TAG, "OPTION_3");

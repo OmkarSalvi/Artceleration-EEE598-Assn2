@@ -126,6 +126,18 @@ public class GaussianBlurTransform implements Runnable {
                         PR[x][y] += G_matrix[r+radius] * qR[x][y + r];
                         PG[x][y] += G_matrix[r+radius] * qG[x][y + r];
                         PB[x][y] += G_matrix[r+radius] * qB[x][y + r];
+                        if(PR[x][y] > 255)
+                            PR[x][y] = 255;
+                        if(PG[x][y] > 255)
+                            PG[x][y] = 255;
+                        if(PB[x][y] > 255)
+                            PB[x][y] = 255;
+                        if(PR[x][y] < 0)
+                            PR[x][y] = 0;
+                        if(PG[x][y] < 0)
+                            PG[x][y] = 0;
+                        if(PB[x][y] < 0)
+                            PB[x][y] = 0;
                     }
                 }
             }

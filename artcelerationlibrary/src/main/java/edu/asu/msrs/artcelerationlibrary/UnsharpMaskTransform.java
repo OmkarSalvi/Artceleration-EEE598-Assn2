@@ -101,6 +101,18 @@ public class UnsharpMaskTransform implements Runnable {
                 OutRed[x][y] = (int)(Color.red(Ineachpixel) + ((Color.red(Outeachpixel) - Color.red(Ineachpixel))*f1));
                 OutGreen[x][y] = (int)(Color.green(Ineachpixel) + ((Color.green(Outeachpixel) - Color.green(Ineachpixel))*f1));
                 OutBlue[x][y] = (int)(Color.blue(Ineachpixel) + ((Color.blue(Outeachpixel) - Color.blue(Ineachpixel))*f1));
+                if(OutRed[x][y] > 255)
+                    OutRed[x][y] = 255;
+                if(OutGreen[x][y] > 255)
+                    OutGreen[x][y] = 255;
+                if(OutBlue[x][y] > 255)
+                    OutBlue[x][y] = 255;
+                if(OutRed[x][y] < 0)
+                    OutRed[x][y] = 0;
+                if(OutGreen[x][y] < 0)
+                    OutGreen[x][y] = 0;
+                if(OutBlue[x][y] < 0)
+                    OutBlue[x][y] = 0;
             }
         }
 
