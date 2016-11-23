@@ -39,13 +39,27 @@ public class ColorFilterTransform implements Runnable{
         messengerGBT = gbt;
     }
 
+    /**
+     *
+     * @param input input value for a certain color in pixel
+     * @param color color corresponding to this value { 0 = red; 8 = green; 16 = blue}
+     *              It helps in finding correct indices in int Array
+     * @return output value of the color
+     */
     public int convertRange(int input, int color){
+        /**
+         * confining the input value in 0 to 255
+         */
         if(input < 0)
             input = 0;
         if(input > 255)
             input = 255;
+
         int slope = 0, constant = 0, output = 0;
 
+        /**
+         * Calculating the output value with color filter
+         */
         if(0 <= input && input <= intArgs[color] && intArgs[color] != 0){
             slope = (intArgs[color+1]/intArgs[color]);
             output = slope*input;
@@ -65,6 +79,13 @@ public class ColorFilterTransform implements Runnable{
             slope = ((255 - intArgs[color+7])/(255 - intArgs[color+6]));
             output = slope*input;
         }
+        /**
+         * confining the output value in 0 to 255
+         */
+        if(output < 0)
+            output = 0;
+        if(output > 255)
+            output = 255;
         return output;
     }
 
@@ -86,6 +107,10 @@ public class ColorFilterTransform implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
+        /**
+         * decoding the byte array into input bitmap
+         * creating mutable output bitmap from input bitmap
+         */
         BitmapFactory.Options options0 = new BitmapFactory.Options();
         Bitmap Inbmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length, options0);
         Bitmap OutBmp = Inbmp.copy(Bitmap.Config.ARGB_8888, true);
@@ -93,12 +118,10 @@ public class ColorFilterTransform implements Runnable{
         int N = Inbmp.getHeight();//source bitmap # of rows
         int M = Inbmp.getWidth();//source bitmap # of columns
 
-        // color information
-        //int[][] Alpha = new int[M][N], Red = new int[M][N], Green = new int[M][N], Blue = new int[M][N] ;
-
         int outRed =0, outGrreen =0, outBlue =0;
         for(int x=0; x<M; x++){
             for(int y=0; y<N;y++){
+
                 int eachpixel = Inbmp.getPixel(x,y);
                 int Alpha = Color.alpha(eachpixel);
                 int Red = Color.red(eachpixel);
