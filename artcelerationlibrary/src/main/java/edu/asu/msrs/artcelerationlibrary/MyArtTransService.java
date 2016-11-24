@@ -76,12 +76,12 @@ public class MyArtTransService extends Service {
                     break;
                 case OPTION_3:
                     Log.d(TAG, "OPTION_3");
-                    GaussianBlurTransform objGBT3 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    MotionBlurTransform objGBT3 = new MotionBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
                     new Thread(objGBT3).start();
                     break;
                 case OPTION_4:
                     Log.d(TAG, "OPTION_4");
-                    GaussianBlurTransform objGBT4 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    SobelEdgeFilterTransform objGBT4 = new SobelEdgeFilterTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
                     new Thread(objGBT4).start();
                     break;
                 default:

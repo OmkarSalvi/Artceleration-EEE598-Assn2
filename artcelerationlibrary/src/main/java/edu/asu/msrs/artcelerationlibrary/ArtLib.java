@@ -188,7 +188,7 @@ public class ArtLib {
      * @return Transform: String array which defines provided transform
      */
     public String[] getTransformsArray(){
-        String[] transforms = {"Gaussian Blur", "Unsharp Mask", "Color Filter", "Edge detection", "ASCII transform"};
+        String[] transforms = {"Gaussian Blur", "Unsharp Mask", "Color Filter", "Motion Blur", "Sobel Edge Filter"};
         return transforms;
     }
 
@@ -201,8 +201,8 @@ public class ArtLib {
         transforms[0]=new TransformTest(0, new int[]{1}, new float[]{10.0f});
         transforms[1]=new TransformTest(1, new int[]{11,22,33}, new float[]{10.0f, 2.0f, 0.3f});
         transforms[2]=new TransformTest(2, new int[]{32,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255}, new float[]{0.5f, 0.6f, 0.3f});
-        transforms[3]=new TransformTest(3, new int[]{61,72,29}, new float[]{0.4f, 0.3f, 0.8f});
-        transforms[4]=new TransformTest(4, new int[]{41,82,35}, new float[]{0.7f, 0.2f, 0.5f});
+        transforms[3]=new TransformTest(3, new int[]{0,10,29}, new float[]{0.4f, 0.3f, 0.8f});
+        transforms[4]=new TransformTest(4, new int[]{1,82,35}, new float[]{5.0f, 0.2f, 0.5f});
         return transforms;
     }
 
