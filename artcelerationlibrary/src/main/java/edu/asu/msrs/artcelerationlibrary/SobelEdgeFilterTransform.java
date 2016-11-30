@@ -120,14 +120,16 @@ public class SobelEdgeFilterTransform implements Runnable {
                 green = (int) ((0.5870 * green));
                 blue = (int) ((0.1140 * blue));
 
+                int var = red+green+blue;//this is changed
                 /// set new pixel color to output bitmap
 
                 //Log.d(TAG, "gray: "+String.valueOf(gray));
                 //grayBmp.setPixel(x, y, Color.argb(255, gray, gray, gray));
-                grayBmp.setPixel(x, y, Color.argb(255, red, green, blue));
+                grayBmp.setPixel(x, y, Color.argb(255, var, var, var));//this is changed
 
             }
         }
+
 
         Bitmap sobelBitmap;
         switch (OPTION) {
@@ -148,6 +150,8 @@ public class SobelEdgeFilterTransform implements Runnable {
 
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         sobelBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+        //grayBmp.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+
         byte[] byteStreamArray = byteStream.toByteArray();
 
         Log.d(TAG,"sobelBmp length is :"+String.valueOf(byteStreamArray.length));

@@ -54,6 +54,14 @@ public class MotionBlurTransform implements Runnable {
         req = request;
         messengerGBT = gbt;
     }
+
+    /**
+     * Load native library
+     */
+    static {
+        System.loadLibrary("MyLibs");
+    }
+
     @Override
     public void run() {
         /**
@@ -82,15 +90,19 @@ public class MotionBlurTransform implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         /**
          * we are computing only 1st half values for Gaussian weight vector G(k) i.e index = 0 to r
          * This is because remaining half values are same as 1st half values.
          */
-        int rows = 2*Radius+1; // half range is from 0 to r thus r+1
+        int rows = 2*Radius+1;
 
         BitmapFactory.Options opts = new BitmapFactory.Options();
         Bitmap recvBmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length, opts);
         Bitmap MotionBlurBitmap;
+
+        //Bitmap aftermotionblur = NativeClass.motionblurneon(recvBmp, OPTION, Radius);
+
 
         switch (OPTION) {
             case OPTION_0:
@@ -107,6 +119,7 @@ public class MotionBlurTransform implements Runnable {
 
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         MotionBlurBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+        //aftermotionblur.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
         byte[] byteStreamArray = byteStream.toByteArray();
 
         Log.d(TAG,"MotionBlurBitmap length is :"+String.valueOf(byteStreamArray.length));

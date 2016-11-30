@@ -25,6 +25,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -32,6 +33,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -72,6 +74,13 @@ public class ArtLib {
     public ArtLib(Activity activity){
         objActivity = activity;
         startUp();
+    }
+
+    /**
+     * Load native library
+     */
+    static {
+        System.loadLibrary("MyLibs");
     }
 
     /**
@@ -198,10 +207,10 @@ public class ArtLib {
      */
     public TransformTest[] getTestsArray(){
         TransformTest[] transforms = new TransformTest[5];
-        transforms[0]=new TransformTest(0, new int[]{1}, new float[]{10.0f});
+        transforms[0]=new TransformTest(0, new int[]{20}, new float[]{10.0f});
         transforms[1]=new TransformTest(1, new int[]{11,22,33}, new float[]{10.0f, 2.0f, 0.3f});
         transforms[2]=new TransformTest(2, new int[]{32,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255}, new float[]{0.5f, 0.6f, 0.3f});
-        transforms[3]=new TransformTest(3, new int[]{0,10,29}, new float[]{0.4f, 0.3f, 0.8f});
+        transforms[3]=new TransformTest(3, new int[]{1,10,29}, new float[]{0.4f, 0.3f, 0.8f});
         transforms[4]=new TransformTest(4, new int[]{1,82,35}, new float[]{5.0f, 0.2f, 0.5f});
         return transforms;
     }
@@ -214,10 +223,21 @@ public class ArtLib {
     public boolean requestTransform(Bitmap img, int index, int[] intArgs, float[] floatArgs){
 
         /**
+         * calling native method
+         */
+        //String test = NativeClass.getMessageFromJNI();
+        //Bitmap Obmp = img.copy(Bitmap.Config.ARGB_8888, true);
+        //ByteBuffer _handler = NativeClass.getBitmapFromJNI(Obmp);
+        //Bitmap rotatedImage = NativeClass.brightness(img, 2.0f);
+        //Bitmap rotatedImage=NativeClass.rotateBitmapCcw90(Obmp);
+
+        //Log.d(TAG, "msg from native lib : "+test);
+        /**
          * Creating byte array using received bitmap
          */
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         img.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+        //rotatedImage.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
         byte[] byteStreamArray = byteStream.toByteArray();
         Log.d(TAG,"length is :"+String.valueOf(byteStreamArray.length));
         Log.d(TAG, "int intArgs : "+intArgs[0]);

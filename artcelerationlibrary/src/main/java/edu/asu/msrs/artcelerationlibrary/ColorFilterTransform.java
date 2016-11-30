@@ -40,6 +40,13 @@ public class ColorFilterTransform implements Runnable{
     }
 
     /**
+     * Load native library
+     */
+    static {
+        System.loadLibrary("MyLibs");
+    }
+
+    /**
      *
      * @param input input value for a certain color in pixel
      * @param color color corresponding to this value { 0 = red; 8 = green; 16 = blue}
@@ -107,6 +114,9 @@ public class ColorFilterTransform implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
+
         /**
          * decoding the byte array into input bitmap
          * creating mutable output bitmap from input bitmap
@@ -115,6 +125,10 @@ public class ColorFilterTransform implements Runnable{
         Bitmap Inbmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length, options0);
         Bitmap OutBmp = Inbmp.copy(Bitmap.Config.ARGB_8888, true);
 
+        Log.d(TAG, "int args in 0th : "+intArgs[0]+" "+intArgs[1]+" "+intArgs[2]+" "+intArgs[3]);
+        Bitmap outImage = NativeClass.colorfilterndk(Inbmp, 2.0f, intArgs);
+
+        /*
         int N = Inbmp.getHeight();//source bitmap # of rows
         int M = Inbmp.getWidth();//source bitmap # of columns
 
@@ -135,9 +149,11 @@ public class ColorFilterTransform implements Runnable{
                 OutBmp.setPixel(x, y, Color.argb(Alpha, outRed, outGrreen, outBlue));
             }
         }
+           */
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        OutBmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        //OutBmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        outImage.compress(Bitmap.CompressFormat.PNG, 100, stream);
         byte[] byteArray = stream.toByteArray();
 
         int what;
