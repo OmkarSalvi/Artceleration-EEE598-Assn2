@@ -5,7 +5,7 @@
 #include <android/bitmap.h>
 #include <cstring>
 #include <unistd.h>
-
+#include<arm_neon.h>
 
 #define  LOG_TAG    "Applog"
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
@@ -241,6 +241,104 @@ static void getVertical(AndroidBitmapInfo* info, void* pixels, int rad){
     int W = info->width;//source bitmap # of columns
     LOGD("Height = %d | Width = %d | rows = %d", H, W, rows );
 
+    int xx, yy;
+    uint32_t* line, *red, *green, *blue, *alpha;
+    uint32x4_t redMask = vdupq_n_u32 (0x00FF0000);
+    uint32x4_t greenMask = vdupq_n_u32 (0x0000FF00);
+    uint32x4_t blueMask = vdupq_n_u32 (0x000000FF);
+    uint32x4_t alphaMask = vdupq_n_u32 (0xFF000000);
+
+    for(yy = 0; yy < info->height; yy++) {
+        line = (uint32_t *) pixels;
+        //red = (uint32_t *) pixels;
+        //green = (uint32_t *) pixels;
+        //blue = (uint32_t *) pixels;
+        //LOGD("------------------outer iteration %d ---------------------", yy);
+        for(xx =0; xx < info->width; xx+=4) {
+            //LOGD("iteration %d started", xx);
+            /**
+             * 4 pixels loaded into 3 registers at same time
+             * rgb[0] -> alpha
+             * rgb[1] -> red
+             * rgb[2] -> green
+             * rgb[3] -> blue
+             */
+            uint32x4x4_t rgb = vld4q_u32(line);
+
+            /**
+             * Logical And with corresponding mask for each color
+             */
+            rgb.val[0] = vandq_u32(rgb.val[0], alphaMask);
+            rgb.val[1] = vandq_u32(rgb.val[1], redMask);
+            rgb.val[2] = vandq_u32(rgb.val[2], greenMask);
+            rgb.val[3] = vandq_u32(rgb.val[3], blueMask);
+
+            /**
+             * right shift
+             */
+            //rgb.val[0] = vshrq_n_u32(rgb.val[0], 24);
+            rgb.val[1] = vshrq_n_u32(rgb.val[1], 16);
+            rgb.val[2] = vshrq_n_u32(rgb.val[2], 8);
+
+            /*
+            //storing color info in different arrays
+            vst1q_u32(red, rgb.val[1]);
+            vst1q_u32(green, rgb.val[2]);
+            vst1q_u32(blue, rgb.val[3]);
+
+            int rsum=0, gsum=0,bsum=0;
+            rsum = *red + *(red+8) + *(red+16) + *(red+24);
+            gsum = *green + *(green+8) + *(green+16) + *(green+24);
+            bsum = *blue + *(blue+8) + *(blue+16) + *(blue+24);
+            rsum = rgb_clamp(rsum);
+            gsum = rgb_clamp(gsum);
+            bsum = rgb_clamp (bsum);
+
+            uint32x4_t redAvg = vdupq_n_u32 (rsum/4);
+            uint32x4_t greenAvg = vdupq_n_u32 (gsum/4);
+            uint32x4_t blueAvg = vdupq_n_u32 (bsum/4);
+
+            redAvg = vshlq_n_u32(redAvg, 16);
+            greenAvg = vshlq_n_u32(greenAvg, 8);
+
+            uint32x4_t temp1;
+            temp1 = vorrq_u32(rgb.val[0], redAvg);
+            temp1 = vorrq_u32(temp1, greenAvg);
+            temp1 = vorrq_u32(temp1, blueAvg);
+            //vst1q_u32(line, temp1);
+            //LOGD("finish");
+
+             */
+            //left shift
+
+            rgb.val[1] = vshlq_n_u32(rgb.val[1], 16);
+            rgb.val[2] = vshlq_n_u32(rgb.val[2], 8);
+
+
+            //Logical And
+
+            rgb.val[1] = vandq_u32(rgb.val[1], redMask);
+            rgb.val[2] = vandq_u32(rgb.val[2], greenMask);
+            rgb.val[3] = vandq_u32(rgb.val[3], blueMask);
+
+            //Logical OR
+
+            uint32x4_t temp;
+            temp = vorrq_u32(rgb.val[0], rgb.val[1]);
+            temp = vorrq_u32(temp, rgb.val[2]);
+            temp = vorrq_u32(temp, rgb.val[3]);
+            vst1q_u32(line, temp);
+            //vaddq_u32()// addition of 2 uint32x4_t
+
+            line += 4;// go to 5th pixel (i.e. add # pixels * size of pixel)
+            //if(yy == 1065){
+              //  LOGD("iteration %d ended", xx);
+            //}
+            //LOGD("iteration %d ended", xx);
+        }
+
+        pixels = (char*)pixels + (info->stride);
+    }
     /*
     // color information
     int Alpha[][] = new int[W][H], Red = new int[W][H], Green = new int[W][H], Blue = new int[W][H] ;

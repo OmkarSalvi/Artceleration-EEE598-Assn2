@@ -208,10 +208,10 @@ public class ArtLib {
     public TransformTest[] getTestsArray(){
         TransformTest[] transforms = new TransformTest[5];
         transforms[0]=new TransformTest(0, new int[]{20}, new float[]{10.0f});
-        transforms[1]=new TransformTest(1, new int[]{11,22,33}, new float[]{10.0f, 2.0f, 0.3f});
-        transforms[2]=new TransformTest(2, new int[]{32,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255}, new float[]{0.5f, 0.6f, 0.3f});
-        transforms[3]=new TransformTest(3, new int[]{1,10,29}, new float[]{0.4f, 0.3f, 0.8f});
-        transforms[4]=new TransformTest(4, new int[]{1,82,35}, new float[]{5.0f, 0.2f, 0.5f});
+        transforms[1]=new TransformTest(1, new int[]{}, new float[]{10.0f, 2.0f});
+        transforms[2]=new TransformTest(2, new int[]{32,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255}, new float[]{});
+        transforms[3]=new TransformTest(3, new int[]{1,10}, new float[]{});
+        transforms[4]=new TransformTest(4, new int[]{2}, new float[]{10.0f});
         return transforms;
     }
 
@@ -231,7 +231,32 @@ public class ArtLib {
         //Bitmap rotatedImage = NativeClass.brightness(img, 2.0f);
         //Bitmap rotatedImage=NativeClass.rotateBitmapCcw90(Obmp);
 
-        //Log.d(TAG, "msg from native lib : "+test);
+        //Log.d(TAG, "msg from native lib : "+index);
+        /**
+         * Verifying the input
+         */
+        switch(index){
+            case 0:
+                if(intArgs.length != 1 || floatArgs.length != 1)
+                    return false;
+                break;
+            case 1:
+                if(intArgs.length != 0 || floatArgs.length != 2)
+                    return false;
+                break;
+            case 2:
+                if(intArgs.length != 24 || floatArgs.length != 0)
+                    return false;
+                break;
+            case 3:
+                if(intArgs.length != 2 || floatArgs.length != 0)
+                    return false;
+                break;
+            case 4:
+                if(intArgs.length != 1 || floatArgs.length != 1)
+                    return false;
+                break;
+        }
         /**
          * Creating byte array using received bitmap
          */
@@ -240,8 +265,8 @@ public class ArtLib {
         //rotatedImage.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
         byte[] byteStreamArray = byteStream.toByteArray();
         Log.d(TAG,"length is :"+String.valueOf(byteStreamArray.length));
-        Log.d(TAG, "int intArgs : "+intArgs[0]);
-        Log.d(TAG, "int floatArgs : "+floatArgs[0]);
+        //Log.d(TAG, "int intArgs : "+intArgs[0]);
+        //Log.d(TAG, "int floatArgs : "+floatArgs[0]);
         try {
             /**
              * Binding data to message object using memory file object

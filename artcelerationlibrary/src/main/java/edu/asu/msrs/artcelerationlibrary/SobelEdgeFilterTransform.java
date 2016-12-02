@@ -72,7 +72,7 @@ public class SobelEdgeFilterTransform implements Runnable {
         float sigma = floatArgs[0];
         Log.d(TAG, "selectedOperation : " + OPTION);
         Log.d(TAG, "sigma : " + sigma);
-        OPTION = 0;
+        //OPTION = 0;
 
         /**
          * Storing the byte array received in the buffer

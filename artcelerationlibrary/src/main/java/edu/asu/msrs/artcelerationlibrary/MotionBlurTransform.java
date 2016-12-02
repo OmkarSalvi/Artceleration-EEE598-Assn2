@@ -101,9 +101,12 @@ public class MotionBlurTransform implements Runnable {
         Bitmap recvBmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length, opts);
         Bitmap MotionBlurBitmap;
 
-        //Bitmap aftermotionblur = NativeClass.motionblurneon(recvBmp, OPTION, Radius);
+        /**
+         * calling native method
+         */
+        Bitmap aftermotionblur = NativeClass.motionblurneon(recvBmp, OPTION, Radius);
 
-
+        /*
         switch (OPTION) {
             case OPTION_0:
                 MotionBlurBitmap = getHorizontal(recvBmp, Radius, rows);
@@ -116,10 +119,10 @@ public class MotionBlurTransform implements Runnable {
                 Log.d(TAG, "Please select valid operation!!");
                 break;
         }
-
+        */
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-        MotionBlurBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
-        //aftermotionblur.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+        //MotionBlurBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+        aftermotionblur.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
         byte[] byteStreamArray = byteStream.toByteArray();
 
         Log.d(TAG,"MotionBlurBitmap length is :"+String.valueOf(byteStreamArray.length));

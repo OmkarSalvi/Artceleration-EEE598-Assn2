@@ -189,15 +189,15 @@ public class GaussianBlurTransform implements Runnable {
         BitmapFactory.Options options1 = new BitmapFactory.Options();
         Bitmap Inbmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length, options1);
 
-        Bitmap OutBmp = doGaussianBlur(radius, sigma, Inbmp);
+        //Bitmap OutBmp = doGaussianBlur(radius, sigma, Inbmp);
 
         //Bitmap OutBmp = Inbmp;
 
         //Log.d(TAG, "output W : "+OutBmp.getWidth()+" | H: "+OutBmp.getHeight());
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        OutBmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
-        //Inbmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        //OutBmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        Inbmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
         byte[] byteArray = stream.toByteArray();
 
         int what;
