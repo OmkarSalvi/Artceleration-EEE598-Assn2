@@ -1,3 +1,7 @@
+/**
+ * This is C++ code which contains the implementations of all the native functions and its helper functions.
+ * This is the implementation of native library
+ */
 #include<edu_asu_msrs_artcelerationlibrary_NativeClass.h>
 #include <jni.h>
 #include <android/log.h>
@@ -12,6 +16,9 @@
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 
+/**
+ * Test function to send a string from native library
+ */
     JNIEXPORT jstring
     JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_getMessageFromJNI
             (JNIEnv *env, jclass obj) {
@@ -101,6 +108,11 @@ JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_rot
     return newBitmap;
 }
 
+/**
+ * method to restrict pixel values between 0 and 255
+ * @param value: integer variable representing the pixel value
+ * @return integer pixel value after clamping the input value between 0 and 255
+ */
 static int rgb_clamp(int value) {
     if(value > 255) {
         return 255;
@@ -111,8 +123,15 @@ static int rgb_clamp(int value) {
     return value;
 }
 
-//static int* intArgs;//int array of arguments
 
+/**
+ * method to implement color filter on each color channel
+ * @param input : input value of the pixel color
+ * @param color : the color of the pixel -> 0 : red, 8 : green, 16 : blue
+ *                this is used to get correct index inside argument integer array
+ * @param intArgs[] : integer array which holds the mapping points for all 3 color channels
+ * @return integer value which is final value of the color channel after transform
+ */
 static int convertRange(int input, int color, jint intArgs[]){
     /**
      * confining the input value in 0 to 255
@@ -150,10 +169,18 @@ static int convertRange(int input, int color, jint intArgs[]){
     return output;
 }
 
-static void transformcolors(AndroidBitmapInfo* info, void* pixels, float brightnessValue, jint intArgs[]){
+/**
+ * method which iterarte through all the pixels inside the bitmap. It separates the color channels from the pixel and request the color filter transform
+ * @param info : object which stores the information about bitmap
+ * @param pixels : pointer to the pixels in the bitmap
+ * @param intArgs[] : integer array which holds the mapping points for all 3 color channels
+ * @return void
+ */
+static void transformcolors(AndroidBitmapInfo* info, void* pixels, jint intArgs[]){
     int xx, yy, red, green, blue, alpha;
     uint32_t* line;
 
+    //iterate through all pixels column wise
     for(yy = 0; yy < info->height; yy++){
         line = (uint32_t*)pixels;
         for(xx =0; xx < info->width; xx++){
@@ -164,11 +191,12 @@ static void transformcolors(AndroidBitmapInfo* info, void* pixels, float brightn
             green = (int)((line[xx] & 0x0000FF00) >> 8);
             blue = (int) (line[xx] & 0x00000FF );
 
+            //request color transform for each color channel of a pixel
             red = convertRange(red, 0 , intArgs);
             green = convertRange(green, 8 , intArgs);
             blue = convertRange(blue, 16 , intArgs);
 
-            // set the new pixel back in
+            // set the new pixel back in bitmap
             line[xx] =
                     ((alpha << 24) & 0xFF000000) |
                     ((red << 16) & 0x00FF0000) |
@@ -180,23 +208,34 @@ static void transformcolors(AndroidBitmapInfo* info, void* pixels, float brightn
     }
 }
 
-
-JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_colorfilterndk(JNIEnv * env, jobject  obj, jobject bitmap, jfloat brightnessValue, jintArray arr)
+/**
+ * Native method which is called to initiate the color filter transform
+ * @param env :  the JNI interface pointer. A pointer to a structure storing all JNI function pointers
+ * @param obj : Java class object or NULL if an error occurs
+ * @param bitmap : bitmap object of the input image
+ * @param arr : integer array which holds the mapping points for all 3 color channels
+ * @return void
+ */
+JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_colorfilterndk(JNIEnv * env, jobject  obj, jobject bitmap, jintArray arr)
 {
     LOGD("reading bitmap info...");
     AndroidBitmapInfo  info;
     int ret, i;
     void* pixels;
 
+    //fill out the AndroidBitmapInfo struct for given bitmap
     if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
         LOGE("AndroidBitmap_getInfo() failed ! error=%d", ret);
         return bitmap;
     }
+    //verifying the format of the pixels stored in bitmap
     if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
         LOGE("Bitmap format is not RGBA_8888 !");
         return bitmap;
     }
 
+    //obtain the pixel values from the bitamp and attempt to lock the pixel address.
+    // Locking will ensure that the memory for the pixels will not move until the unlockPixels call.
     if ((ret = AndroidBitmap_lockPixels(env, bitmap, &pixels)) < 0) {
         LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
     }
@@ -209,11 +248,11 @@ JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_col
         LOGD("%d | %d",body[i], intArgs[i]);
     }*/
 
-    // initializations, declarations, etc
+    // declarations for storing int argument array
     jint *c_array;
     jint j = 0;
 
-    // get a pointer to the array
+    // get a pointer to the int argument array
     c_array = env->GetIntArrayElements(arr, 0);
 
     // do some exception checking
@@ -226,12 +265,14 @@ JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_col
     // release the memory so java can have it again
     //env->ReleaseIntArrayElements(env, arr, c_array);
 
-    //LOGD("int args in 1st : %d %d %d %d",arr[0],arr[1], arr[2], arr[3]);
-    //intArgs = arr;
-    transformcolors(&info,pixels, brightnessValue, c_array);
+    //calling method transformcolors to start color filter transform
+    transformcolors(&info,pixels, c_array);
 
+    //Call to balance a successful call to AndroidBitmap_lockPixels.
+    // after this time the address of the pixels should no longer be used.
     AndroidBitmap_unlockPixels(env, bitmap);
 
+    //return bitmap which is transformed using color filter
     return bitmap;
 }
 

@@ -207,7 +207,7 @@ public class ArtLib {
      */
     public TransformTest[] getTestsArray(){
         TransformTest[] transforms = new TransformTest[5];
-        transforms[0]=new TransformTest(0, new int[]{20}, new float[]{10.0f});
+        transforms[0]=new TransformTest(0, new int[]{10}, new float[]{5.0f});
         transforms[1]=new TransformTest(1, new int[]{}, new float[]{10.0f, 2.0f});
         transforms[2]=new TransformTest(2, new int[]{32,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255}, new float[]{});
         transforms[3]=new TransformTest(3, new int[]{1,10}, new float[]{});
@@ -227,13 +227,10 @@ public class ArtLib {
          */
         //String test = NativeClass.getMessageFromJNI();
         //Bitmap Obmp = img.copy(Bitmap.Config.ARGB_8888, true);
-        //ByteBuffer _handler = NativeClass.getBitmapFromJNI(Obmp);
-        //Bitmap rotatedImage = NativeClass.brightness(img, 2.0f);
         //Bitmap rotatedImage=NativeClass.rotateBitmapCcw90(Obmp);
 
-        //Log.d(TAG, "msg from native lib : "+index);
         /**
-         * Verifying the input
+         * The input validation
          */
         switch(index){
             case 0:
@@ -265,8 +262,7 @@ public class ArtLib {
         //rotatedImage.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
         byte[] byteStreamArray = byteStream.toByteArray();
         Log.d(TAG,"length is :"+String.valueOf(byteStreamArray.length));
-        //Log.d(TAG, "int intArgs : "+intArgs[0]);
-        //Log.d(TAG, "int floatArgs : "+floatArgs[0]);
+
         try {
             /**
              * Binding data to message object using memory file object

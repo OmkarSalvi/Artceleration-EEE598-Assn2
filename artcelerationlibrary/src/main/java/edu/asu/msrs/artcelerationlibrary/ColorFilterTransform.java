@@ -1,3 +1,6 @@
+/**
+ * This class performs the Color Filter Transform requested from service
+ */
 package edu.asu.msrs.artcelerationlibrary;
 
 import android.graphics.Bitmap;
@@ -123,10 +126,12 @@ public class ColorFilterTransform implements Runnable{
          */
         BitmapFactory.Options options0 = new BitmapFactory.Options();
         Bitmap Inbmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length, options0);
-        Bitmap OutBmp = Inbmp.copy(Bitmap.Config.ARGB_8888, true);
+        //Bitmap OutBmp = Inbmp.copy(Bitmap.Config.ARGB_8888, true);
 
-        Log.d(TAG, "int args in 0th : "+intArgs[0]+" "+intArgs[1]+" "+intArgs[2]+" "+intArgs[3]);
-        Bitmap outImage = NativeClass.colorfilterndk(Inbmp, 2.0f, intArgs);
+        /**
+         * calling native method
+         */
+        Bitmap outImage = NativeClass.colorfilterndk(Inbmp, intArgs);
 
         /*
         int N = Inbmp.getHeight();//source bitmap # of rows

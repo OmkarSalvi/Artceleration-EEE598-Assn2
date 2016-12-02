@@ -1,6 +1,5 @@
 /**
- * This class performs the necessary transform requested from service
- * For now, the same image is returned to the library to verify communication process
+ * This class performs the GaussianBlur Transform requested from service
  */
 package edu.asu.msrs.artcelerationlibrary;
 
@@ -54,17 +53,32 @@ public class GaussianBlurTransform implements Runnable {
     }
 
     /**
-     * method to be used in UnsharpMask Transform
-     * @param radius
-     * @param sigma
-     * @param bitmap
-     * @return
+     * method to restrict pixel values between 0 and 255
+     * @param value: integer variable representing the pixel value
+     * @return integer pixel value after clamping the input value between 0 and 255
+     */
+    static int rgb_clamp(int value) {
+        if(value > 255) {
+            return 255;
+        }
+        if(value < 0) {
+            return 0;
+        }
+        return value;
+    }
+
+    /**
+     * method to implemet gaussian blur Transform
+     * @param radius : radius to be used
+     * @param sigma : standard deviation to be used for computations
+     * @param bitmap : input bitmap
+     * @return final bitmap after transformation
      */
     public Bitmap doGaussianBlur(int radius, float sigma, Bitmap bitmap){
 
         Log.d(TAG, "doGaussianBlur started");
 
-        int rows = 2*radius+1; // half range is from 0 to r thus r+1
+        int rows = 2*radius+1;
         float[] G_matrix = new float[rows];
         float PiSigma2 = (float) (2*Math.PI*sigma*sigma);
         float sqrtPiSigma2 = (float)Math.sqrt(PiSigma2);
@@ -81,9 +95,10 @@ public class GaussianBlurTransform implements Runnable {
 
         Log.d(TAG,"N = "+ N+" | M = "+M );
 
-        // color information
+        // color information matrices
         int[][] Alpha = new int[M][N], Red = new int[M][N], Green = new int[M][N], Blue = new int[M][N] ;
 
+        //extract each color information from each pixel
         for(int x=0; x<M; x++){
             for(int y=0; y<N;y++){
                 int eachpixel = bitmap.getPixel(x,y);
@@ -97,13 +112,14 @@ public class GaussianBlurTransform implements Runnable {
         float[][] qR = new float[M][N];
         float[][] qG = new float[M][N];
         float[][] qB = new float[M][N];
-        //q(x,y) = G(‐r)*p(x‐r,y), + ... + G(0)*p(x,y),+ ... + G(r)*p(x+r,y)
+        //Implementation of the equation -
+        // q(x,y) = G(‐r)*p(x‐r,y), + ... + G(0)*p(x,y),+ ... + G(r)*p(x+r,y)
         for(int x=0; x<M; x++){
             for(int y=0; y<N; y++){
                 qR[x][y] = 0; qG[x][y] = 0; qB[x][y] = 0;
                 //Log.d(TAG,"x = "+ x+" | y = "+y );
                 for(int r = -radius ; r<= radius; r++){
-                    int index = (x + r) ;//int index = ((x + r)*N)+y ;
+                    int index = (x + r) ;
                     if(index >= 0 && index < M ){
                         qR[x][y] += G_matrix[r+radius] * Red[index][y];
                         qG[x][y] += G_matrix[r+radius] * Green[index][y];
@@ -117,6 +133,7 @@ public class GaussianBlurTransform implements Runnable {
         int[][] PR = new int[M][N];
         int[][] PG = new int[M][N];
         int[][] PB = new int[M][N];
+        //Implementation of the equation -
         //P(x,y) = G(‐r)*q(x,y‐r), + ... + G(0)*q(x,y),+ ... + G(r)*q(x,y+r)
         for(int x=0; x<M; x++){
             for(int y=0; y<N; y++){
@@ -126,18 +143,11 @@ public class GaussianBlurTransform implements Runnable {
                         PR[x][y] += G_matrix[r+radius] * qR[x][y + r];
                         PG[x][y] += G_matrix[r+radius] * qG[x][y + r];
                         PB[x][y] += G_matrix[r+radius] * qB[x][y + r];
-                        if(PR[x][y] > 255)
-                            PR[x][y] = 255;
-                        if(PG[x][y] > 255)
-                            PG[x][y] = 255;
-                        if(PB[x][y] > 255)
-                            PB[x][y] = 255;
-                        if(PR[x][y] < 0)
-                            PR[x][y] = 0;
-                        if(PG[x][y] < 0)
-                            PG[x][y] = 0;
-                        if(PB[x][y] < 0)
-                            PB[x][y] = 0;
+
+                        PR[x][y] = rgb_clamp(PR[x][y]);
+                        PG[x][y] = rgb_clamp(PG[x][y]);
+                        PB[x][y] = rgb_clamp(PB[x][y]);
+
                     }
                 }
             }
@@ -189,15 +199,16 @@ public class GaussianBlurTransform implements Runnable {
         BitmapFactory.Options options1 = new BitmapFactory.Options();
         Bitmap Inbmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length, options1);
 
-        //Bitmap OutBmp = doGaussianBlur(radius, sigma, Inbmp);
+        //call method which will do all the computations for gaussian blur
+        Bitmap OutBmp = doGaussianBlur(radius, sigma, Inbmp);
 
         //Bitmap OutBmp = Inbmp;
 
         //Log.d(TAG, "output W : "+OutBmp.getWidth()+" | H: "+OutBmp.getHeight());
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        //OutBmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
-        Inbmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        OutBmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        //Inbmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
         byte[] byteArray = stream.toByteArray();
 
         int what;

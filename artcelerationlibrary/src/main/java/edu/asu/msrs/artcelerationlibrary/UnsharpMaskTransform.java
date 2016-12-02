@@ -1,3 +1,6 @@
+/**
+ * This class performs the Unsharp Mask Transform requested from service
+ */
 package edu.asu.msrs.artcelerationlibrary;
 
 import android.graphics.Bitmap;
@@ -46,6 +49,22 @@ public class UnsharpMaskTransform implements Runnable {
         messengerGBT = gbt;
         GBT = objGBT;
     }
+
+    /**
+     * method to restrict pixel values between 0 and 255
+     * @param value: integer variable representing the pixel value
+     * @return integer pixel value after clamping the input value between 0 and 255
+     */
+    static int rgb_clamp(int value) {
+        if(value > 255) {
+            return 255;
+        }
+        if(value < 0) {
+            return 0;
+        }
+        return value;
+    }
+
     @Override
     public void run() {
         /**
@@ -79,6 +98,7 @@ public class UnsharpMaskTransform implements Runnable {
         int radius = (int)(6*f0);
         Log.d(TAG,"radius = "+ radius+" | sigma = "+sigma );
 
+        //Compute Gaussian Blur Transform of the input image
         Bitmap Outbmp = GBT.doGaussianBlur(radius, sigma, Inbmp);
 
         int N = Inbmp.getHeight();//source bitmap # of rows
@@ -101,18 +121,11 @@ public class UnsharpMaskTransform implements Runnable {
                 OutRed[x][y] = (int)(Color.red(Ineachpixel) + ((Color.red(Outeachpixel) - Color.red(Ineachpixel))*f1));
                 OutGreen[x][y] = (int)(Color.green(Ineachpixel) + ((Color.green(Outeachpixel) - Color.green(Ineachpixel))*f1));
                 OutBlue[x][y] = (int)(Color.blue(Ineachpixel) + ((Color.blue(Outeachpixel) - Color.blue(Ineachpixel))*f1));
-                if(OutRed[x][y] > 255)
-                    OutRed[x][y] = 255;
-                if(OutGreen[x][y] > 255)
-                    OutGreen[x][y] = 255;
-                if(OutBlue[x][y] > 255)
-                    OutBlue[x][y] = 255;
-                if(OutRed[x][y] < 0)
-                    OutRed[x][y] = 0;
-                if(OutGreen[x][y] < 0)
-                    OutGreen[x][y] = 0;
-                if(OutBlue[x][y] < 0)
-                    OutBlue[x][y] = 0;
+
+                OutRed[x][y] = rgb_clamp(OutRed[x][y]);
+                OutGreen[x][y] = rgb_clamp(OutGreen[x][y]);
+                OutBlue[x][y] = rgb_clamp(OutBlue[x][y]);
+
             }
         }
 
