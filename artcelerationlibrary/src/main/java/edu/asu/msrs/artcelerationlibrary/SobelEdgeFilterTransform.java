@@ -1,6 +1,6 @@
 /**
  * This class performs the sobel edge transform requested from service
- * For now, the same image is returned to the library to verify communication process
+ * It implements the runnable interface because we create a thread of this class to compute the image transform
  * The transformed image is obtained depending on the parameter sent from the service
  * If the option(a0)= 0, then image is tranfromed in horizontal direction
  * If the option(a0)= 1, then image is tranfromed in vertical direction

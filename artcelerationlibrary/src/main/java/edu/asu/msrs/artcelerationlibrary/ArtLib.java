@@ -209,9 +209,9 @@ public class ArtLib {
         TransformTest[] transforms = new TransformTest[5];
         transforms[0]=new TransformTest(0, new int[]{10}, new float[]{5.0f});
         transforms[1]=new TransformTest(1, new int[]{}, new float[]{10.0f, 2.0f});
-        transforms[2]=new TransformTest(2, new int[]{0,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255}, new float[]{});
+        transforms[2]=new TransformTest(2, new int[]{0,128,64,160,128,192,192,255,0,128,64,60,128,92,192,255,0,128,64,190,128,12,192,55}, new float[]{});
         transforms[3]=new TransformTest(3, new int[]{1,10}, new float[]{});
-        transforms[4]=new TransformTest(4, new int[]{2}, new float[]{10.0f});
+        transforms[4]=new TransformTest(4, new int[]{0}, new float[]{10.0f});
         return transforms;
     }
 
@@ -223,43 +223,40 @@ public class ArtLib {
     public boolean requestTransform(Bitmap img, int index, int[] intArgs, float[] floatArgs){
 
         /**
-         * calling native method
-         */
-        //String test = NativeClass.getMessageFromJNI();
-        //Bitmap Obmp = img.copy(Bitmap.Config.ARGB_8888, true);
-        //Bitmap rotatedImage=NativeClass.rotateBitmapCcw90(Obmp);
-
-        /**
          * The input validation
          */
         switch(index){
             case 0:
-                if(intArgs.length != 1 || floatArgs.length != 1)
+                if(intArgs.length != 1 || floatArgs.length != 1 || intArgs[0] < 1 || floatArgs[0] <= 0)
                     return false;
                 break;
             case 1:
-                if(intArgs.length != 0 || floatArgs.length != 2)
+                // Check whether do we need to check arguments length
+                if(floatArgs.length != 2 || floatArgs[0] <= 0 || floatArgs[1] <= 0)
                     return false;
                 break;
             case 2:
-                if(intArgs.length != 24 || floatArgs.length != 0)
+                // Check whether do we need to check floatArgs length
+                if(intArgs.length != 24)
                     return false;
                 break;
             case 3:
-                if(intArgs.length != 2 || floatArgs.length != 0)
+                // Check whether do we need to check floatArgs length
+                if(intArgs.length != 2 || intArgs[0]<0 || intArgs[0]>1 || intArgs[1] < 0)
                     return false;
                 break;
             case 4:
-                if(intArgs.length != 1 || floatArgs.length != 1)
+                // Check whether do we need to check floatArgs length
+                if(intArgs.length != 1 || intArgs[0]< 0 || intArgs[0] > 2 )
                     return false;
                 break;
         }
+
         /**
          * Creating byte array using received bitmap
          */
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         img.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
-        //rotatedImage.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
         byte[] byteStreamArray = byteStream.toByteArray();
         Log.d(TAG,"length is :"+String.valueOf(byteStreamArray.length));
 

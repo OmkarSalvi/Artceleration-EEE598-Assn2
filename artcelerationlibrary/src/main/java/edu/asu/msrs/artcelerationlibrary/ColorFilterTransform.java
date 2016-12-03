@@ -1,5 +1,6 @@
 /**
  * This class performs the Color Filter Transform requested from service
+ * It implements the runnable interface because we create a thread of this class to compute the image transform
  */
 package edu.asu.msrs.artcelerationlibrary;
 

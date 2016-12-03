@@ -1,6 +1,6 @@
 /**
- * This class performs the necessary transform requested from service
- * For now, the same image is returned to the library to verify communication process
+ * This class performs the Motion blur transform requested from service
+ * It implements the runnable interface because we create a thread of this class to compute the image transform
  */
 package edu.asu.msrs.artcelerationlibrary;
 
@@ -71,7 +71,6 @@ public class MotionBlurTransform implements Runnable {
         byte[] buffer = new byte[byteArraySize];
         ParcelFileDescriptor pfd = (ParcelFileDescriptor) serviceDataBundle.get("libPFD");
         int[] intArgs = (int[]) serviceDataBundle.get("intArray");
-        float[] floatArgs = (float[]) serviceDataBundle.get("floatArray");
 
         /**
          * Setting the radius and sigma values for gaussian transform
