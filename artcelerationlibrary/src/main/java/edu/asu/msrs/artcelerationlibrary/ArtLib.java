@@ -237,6 +237,10 @@ public class ArtLib {
             case 2:
                 if(intArgs==null || intArgs.length != 24)
                     return false;
+                else if(0>intArgs[0] || intArgs[0]>=intArgs[2] || intArgs[2]>=intArgs[4] || intArgs[4]>=intArgs[6] || intArgs[6]>255 ||
+                        0>intArgs[8] || intArgs[8]>=intArgs[10] || intArgs[10]>=intArgs[12] || intArgs[12]>=intArgs[14] || intArgs[14]>255 ||
+                        0>intArgs[16] || intArgs[16]>=intArgs[18] || intArgs[18]>=intArgs[20] || intArgs[20]>=intArgs[22] || intArgs[22]>255)
+                    return false;
                 break;
             case 3:
                 if(intArgs==null || intArgs.length != 2 || intArgs[0]<0 || intArgs[0]>1 || intArgs[1] < 0)
