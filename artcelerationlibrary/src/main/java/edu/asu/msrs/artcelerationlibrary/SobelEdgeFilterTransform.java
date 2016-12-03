@@ -89,7 +89,6 @@ public class SobelEdgeFilterTransform implements Runnable {
          * Setting the radius and sigma values for gaussian transform
          */
         int OPTION = intArgs[0];
-        float sigma = floatArgs[0];
         //Log.d(TAG, "SelectedOperation : " + OPTION);
 
         /**

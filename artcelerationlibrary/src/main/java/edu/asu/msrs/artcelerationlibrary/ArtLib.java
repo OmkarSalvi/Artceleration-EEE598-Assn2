@@ -227,27 +227,23 @@ public class ArtLib {
          */
         switch(index){
             case 0:
-                if(intArgs.length != 1 || floatArgs.length != 1 || intArgs[0] < 1 || floatArgs[0] <= 0)
+                if(intArgs==null || floatArgs==null || intArgs.length != 1 || floatArgs.length != 1 || intArgs[0] < 1 || floatArgs[0] <= 0)
                     return false;
                 break;
             case 1:
-                // Check whether do we need to check arguments length
-                if(floatArgs.length != 2 || floatArgs[0] <= 0 || floatArgs[1] <= 0)
+                if(floatArgs==null || floatArgs.length != 2 || floatArgs[0] <= 0 || floatArgs[1] <= 0)
                     return false;
                 break;
             case 2:
-                // Check whether do we need to check floatArgs length
-                if(intArgs.length != 24)
+                if(intArgs==null || intArgs.length != 24)
                     return false;
                 break;
             case 3:
-                // Check whether do we need to check floatArgs length
-                if(intArgs.length != 2 || intArgs[0]<0 || intArgs[0]>1 || intArgs[1] < 0)
+                if(intArgs==null || intArgs.length != 2 || intArgs[0]<0 || intArgs[0]>1 || intArgs[1] < 0)
                     return false;
                 break;
             case 4:
-                // Check whether do we need to check floatArgs length
-                if(intArgs.length != 1 || intArgs[0]< 0 || intArgs[0] > 2 )
+                if(intArgs==null || intArgs.length != 1 || intArgs[0]< 0 || intArgs[0] > 2 )
                     return false;
                 break;
         }
