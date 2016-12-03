@@ -1,6 +1,7 @@
 /**
  * This is C++ code which contains the implementations of all the native functions and its helper functions.
  * This is the implementation of native library
+ * This file has implementation for color filter and motion blur using NDK
  */
 #include<edu_asu_msrs_artcelerationlibrary_NativeClass.h>
 #include <jni.h>
@@ -10,6 +11,11 @@
 #include <cstring>
 #include <unistd.h>
 #include<arm_neon.h>
+#include <string>
+#include <sstream>
+#include<exception>
+
+using namespace std;
 
 #define  LOG_TAG    "Applog"
 #define  LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
@@ -26,87 +32,6 @@
         return env->NewStringUTF("This is omkar from JNI");
     }
 
-
-JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_rotateBitmapCcw90(JNIEnv * env, jobject obj, jobject bitmap)
-{
-    //
-    //getting bitmap info:
-    //
-    LOGD("reading bitmap info...");
-    AndroidBitmapInfo info;
-    int ret;
-    if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0)
-    {
-        LOGE("AndroidBitmap_getInfo() failed ! error=%d", ret);
-        return NULL;
-    }
-    LOGD("width:%d height:%d stride:%d", info.width, info.height, info.stride);
-    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888)
-    {
-        LOGE("Bitmap format is not RGBA_8888!");
-        return NULL;
-    }
-    //
-    //read pixels of bitmap into native memory :
-    //
-    LOGD("reading bitmap pixels...");
-    void* bitmapPixels;
-    if ((ret = AndroidBitmap_lockPixels(env, bitmap, &bitmapPixels)) < 0)
-    {
-        LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
-        return NULL;
-    }
-    uint32_t* src = (uint32_t*) bitmapPixels;
-    uint32_t* tempPixels = new uint32_t[info.height * info.width];
-    int stride = info.stride;
-    int pixelsCount = info.height * info.width;
-    memcpy(tempPixels, src, sizeof(uint32_t) * pixelsCount);
-    AndroidBitmap_unlockPixels(env, bitmap);
-    //
-    //recycle bitmap - using bitmap.recycle()
-    //
-    LOGD("recycling bitmap...");
-    jclass bitmapCls = env->GetObjectClass(bitmap);
-    jmethodID recycleFunction = env->GetMethodID(bitmapCls, "recycle", "()V");
-    if (recycleFunction == 0)
-    {
-        LOGE("error recycling!");
-        return NULL;
-    }
-    env->CallVoidMethod(bitmap, recycleFunction);
-    //
-    //creating a new bitmap to put the pixels into it - using Bitmap Bitmap.createBitmap (int width, int height, Bitmap.Config config) :
-    //
-    LOGD("creating new bitmap...");
-    jmethodID createBitmapFunction = env->GetStaticMethodID(bitmapCls, "createBitmap", "(IILandroid/graphics/Bitmap$Config;)Landroid/graphics/Bitmap;");
-    jstring configName = env->NewStringUTF("ARGB_8888");
-    jclass bitmapConfigClass = env->FindClass("android/graphics/Bitmap$Config");
-    jmethodID valueOfBitmapConfigFunction = env->GetStaticMethodID(bitmapConfigClass, "valueOf", "(Ljava/lang/String;)Landroid/graphics/Bitmap$Config;");
-    jobject bitmapConfig = env->CallStaticObjectMethod(bitmapConfigClass, valueOfBitmapConfigFunction, configName);
-    jobject newBitmap = env->CallStaticObjectMethod(bitmapCls, createBitmapFunction, info.height, info.width, bitmapConfig);
-    //
-    // putting the pixels into the new bitmap:
-    //
-    if ((ret = AndroidBitmap_lockPixels(env, newBitmap, &bitmapPixels)) < 0)
-    {
-        LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
-        return NULL;
-    }
-    uint32_t* newBitmapPixels = (uint32_t*) bitmapPixels;
-    int whereToPut = 0;
-    for (int x = info.width - 1; x >= 0; --x)
-        for (int y = 0; y < info.height; ++y)
-        {
-            uint32_t pixel = tempPixels[info.width * y + x];
-            newBitmapPixels[whereToPut++] = pixel;
-        }
-    AndroidBitmap_unlockPixels(env, newBitmap);
-    //
-    // freeing the native memory used to store the pixels
-    //
-    delete[] tempPixels;
-    return newBitmap;
-}
 
 /**
  * method to restrict pixel values between 0 and 255
@@ -239,14 +164,6 @@ JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_col
     if ((ret = AndroidBitmap_lockPixels(env, bitmap, &pixels)) < 0) {
         LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
     }
-    /*
-    LOGD("int args in 1st : ");
-    jsize len = env->GetArrayLength(env, arr);
-    jint *body = env->GetIntArrayElements(env, arr, 0);
-    for (i=0; i<len; i++) {
-        intArgs[i]=body[i];
-        LOGD("%d | %d",body[i], intArgs[i]);
-    }*/
 
     // declarations for storing int argument array
     jint *c_array;
@@ -262,9 +179,6 @@ JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_col
     }
 
 
-    // release the memory so java can have it again
-    //env->ReleaseIntArrayElements(env, arr, c_array);
-
     //calling method transformcolors to start color filter transform
     transformcolors(&info,pixels, c_array);
 
@@ -276,7 +190,12 @@ JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_col
     return bitmap;
 }
 
-static void getVertical(AndroidBitmapInfo* info, void* pixels, int rad){
+
+/**
+ * This method is for implementing motion blur using NEON.
+ * But it is not working as expected
+ */
+static void getVerticalneon(AndroidBitmapInfo* info, void* pixels, int rad){
     int rows = 2*rad+1;
     int H = info->height;//source bitmap # of rows
     int W = info->width;//source bitmap # of columns
@@ -291,10 +210,6 @@ static void getVertical(AndroidBitmapInfo* info, void* pixels, int rad){
 
     for(yy = 0; yy < info->height; yy++) {
         line = (uint32_t *) pixels;
-        //red = (uint32_t *) pixels;
-        //green = (uint32_t *) pixels;
-        //blue = (uint32_t *) pixels;
-        //LOGD("------------------outer iteration %d ---------------------", yy);
         for(xx =0; xx < info->width; xx+=4) {
             //LOGD("iteration %d started", xx);
             /**
@@ -380,140 +295,218 @@ static void getVertical(AndroidBitmapInfo* info, void* pixels, int rad){
 
         pixels = (char*)pixels + (info->stride);
     }
-    /*
-    // color information
-    int Alpha[][] = new int[W][H], Red = new int[W][H], Green = new int[W][H], Blue = new int[W][H] ;
 
-        for(int x=0; x<W; x++){
-            for(int y=0; y<H;y++){
-                int eachpixel = bmp.getPixel(x,y);
-                Alpha[x][y] = Color.alpha(eachpixel);
-                Red[x][y] = Color.red(eachpixel);
-                Green[x][y] = Color.green(eachpixel);
-                Blue[x][y] = Color.blue(eachpixel);
-            }
-        }
-
-        int qR[][] = new int[W][H];
-        int qG[][] = new int[W][H];
-        int qB[][] = new int[W][H];
-
-        for(int x=0; x<W; x++){
-            for(int y=0; y<H; y++){
-                qR[x][y] = 0; qG[x][y] = 0; qB[x][y] = 0;
-                for(int r = -rad ; r<= rad; r++){
-                    if((y + r) >= 0 && (y + r) < H ){
-                        qR[x][y] += Red[x][y + r];
-                        qG[x][y] += Green[x][y + r];
-                        qB[x][y] += Blue[x][y + r];
-                    }
-                }
-            }
-        }
-        Log.d(TAG,"Vertical calculation finished");
-
-        Bitmap OutBmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
-        */
-        /**
-         * setting individual pixels of Final output bitmap
-         */
-    /*
-        for(int x =0 ; x< OutBmp.getWidth(); x++){
-            for(int y=0; y < OutBmp.getHeight(); y++){
-                int color = Color.argb(Alpha[x][y], qR[x][y]/rows, qG[x][y]/rows, qB[x][y]/rows);
-                OutBmp.setPixel(x, y, color);
-            }
-        }*/
     LOGD("Finished with MotionBlur");
         //return OutBmp;
     }
 
-
+/**
+ * This method computes the horizontal blur transform of the input bitmap
+ * @param info :  object which stores the information about bitmap
+ * @param pixels : pointer to the pixels in the bitmap
+ * @param rad : radius for the average calculation
+ * @return void
+ */
 static void getHorizontal(AndroidBitmapInfo* info, void* pixels, int rad){
 
     int rows = 2*rad+1;
     int H = info->height;//source bitmap # of rows
     int W = info->width;//source bitmap # of columns
-    LOGD("Height = %d | Width = %d | rows = %d", H, W, rows);
+    //LOGD("Height = %d | Width = %d | rows = %d | stride = %d", H, W, rows, info->stride);
 
-    /*
-    //Initializing pixel arrays
-    int Alpha[][] = new int[W][H], Red = new int[W][H], Green = new int[W][H], Blue = new int[W][H] ;
-        int x,y;
-        // Extracting individual RGB pixel from original image
-        for(x=0; x<W; x++){
-            for(y=0; y<H;y++){
-                Alpha[x][y] = Color.alpha(bmp.getPixel(x,y));
-                Red[x][y] = Color.red(bmp.getPixel(x,y));
-                Green[x][y] = Color.green(bmp.getPixel(x,y));
-                Blue[x][y] = Color.blue(bmp.getPixel(x,y));
-            }
+    uint32_t* out_pixels = (uint32_t*)pixels;
+
+    int xx, yy, red, green, blue, alpha, x, y;
+    uint32_t* line;
+    int *red_row = new int [W*H];int *green_row= new int [W*H];int *blue_row= new int [W*H]; int *alpha_row= new int [W*H];
+
+    //iterate through all pixels row wise
+    for(yy = 0; yy < info->height; yy++){
+        line = (uint32_t*)pixels;
+        for(xx =0; xx < info->width; xx++){
+            //extract the ARGB values from the pixel
+            alpha = (int) ((line[xx] & 0xFF000000) >> 24);
+            red = (int) ((line[xx] & 0x00FF0000) >> 16);
+            green = (int)((line[xx] & 0x0000FF00) >> 8);
+            blue = (int) (line[xx] & 0x00000FF );
+
+            //storing ARGB values in separate arrays
+            *(alpha_row+yy*info->stride/4+xx) = alpha;
+            *(red_row+yy*info->stride/4+xx) = red;
+            *(green_row+yy*info->stride/4+xx) = green;
+            *(blue_row+yy*info->stride/4+xx) = blue;
+
         }
 
-        int qR[][] = new int [W][H];
-        int qG[][] = new int[W][H];
-        int qB[][] = new int[W][H];
-
-        for(x=0; x<W; x++){
-            for(y=0; y<H; y++){
-                qR[x][y] = 0; qG[x][y] = 0; qB[x][y] = 0;
-                for(int r = -rad ; r<= rad; r++){
-                    if((x + r) >= 0 && (x + r) < W ){
-                        qR[x][y] += Red[x + r][y];
-                        qG[x][y] += Green[x + r][y];
-                        qB[x][y] += Blue[x + r][y];
-                    }
+        pixels = (char*)pixels + info->stride;
+    }
+    LOGD("done reading");
+    int *qR = new int [W*H] ; int *qG= new int [W*H]; int *qB= new int [W*H];
+    pixels = (void*) out_pixels;
+    //Computing average in each row for given radius
+    for(x=0; x<H; x++) {
+        for (y = 0; y < W; y++) {
+            qR[x*W+y] = 0;
+            qG[x*W+y] = 0;
+            qB[x*W+y] = 0;
+            for (int r = -rad; r <= rad; r++) {
+                if ((y + r) >= 0 && (y + r) < W) {
+                    qR[x*W+y] += red_row[(x*W)+y+r];//*(red_row+((x + r)*4)+y);
+                    qG[x*W+y] += green_row[(x*W)+y+r];//*(green_row+(x*W)+y+r);
+                    qB[x*W+y] += blue_row[(x*W)+y+r];//*(blue_row+(x*W)+y+r);
                 }
             }
+            qR[x*W+y] /= rows;
+            qG[x*W+y] /= rows;
+            qB[x*W+y] /= rows;
         }
-        Log.d(TAG,"Horizontal calculation finished");
+    }
+    LOGD("done compute");
+    //Storing computed values back into the original pixel location in bitmap
+    for(yy = 0; yy < info->height; yy++){
+        line = (uint32_t*)out_pixels;
+        for(xx =0; xx < info->width; xx++){
+            // set the new pixel back in bitmap
+            line[xx] =
+                    (((*(alpha_row+yy*info->stride/4+xx)) << 24) & 0xFF000000) |
+                    ((qR[yy*info->stride/4+xx] << 16) & 0x00FF0000) |
+                    ((qG[yy*info->stride/4+xx] << 8) & 0x0000FF00) |
+                    (qB[yy*info->stride/4+xx] & 0x000000FF);
+        }
 
-
-        Bitmap OutBmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
-        */
-        /**
-         * setting individual pixels of Final output bitmap
-         */
-    /*
-        for(x =0 ; x< OutBmp.getWidth(); x++){
-            for(y=0; y < OutBmp.getHeight(); y++){
-                int color = Color.argb(Alpha[x][y], qR[x][y]/rows, qG[x][y]/rows, qB[x][y]/rows);
-                OutBmp.setPixel(x, y, color);
-            }
-        }*/
+        out_pixels = out_pixels + info->stride/4;
+    }
     LOGD("Finished with MotionBlur");
-        //return OutBmp;
     }
 
-JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_motionblurneon(JNIEnv * env, jobject  obj, jobject bitmap, jint a0, jint a1)
+/**
+ * This method computes the vertical blur transform of the input bitmap
+ * @param info :  object which stores the information about bitmap
+ * @param pixels : pointer to the pixels in the bitmap
+ * @param rad : radius for the average calculation
+ * @return void
+ */
+static void getVertical(AndroidBitmapInfo* info, void* pixels, int rad){
+
+    int rows = 2*rad+1;
+    int H = info->height;//source bitmap # of rows
+    int W = info->width;//source bitmap # of columns
+    LOGD("Height = %d | Width = %d | rows = %d | stride = %d", H, W, rows, info->stride);
+
+    uint32_t* out_pixels = (uint32_t*)pixels;
+
+    int xx, yy, red, green, blue, alpha, x, y;
+    uint32_t* line;
+    int *red_row = new int [W*H];int *green_row= new int [W*H];int *blue_row= new int [W*H]; int *alpha_row= new int [W*H];
+
+    //iterate through all pixels row wise
+    for(yy = 0; yy < info->height; yy++){
+        line = (uint32_t*)pixels;
+        for(xx =0; xx < info->width; xx++){
+            //extract the ARGB values from the pixel
+            alpha = (int) ((line[xx] & 0xFF000000) >> 24);
+            red = (int) ((line[xx] & 0x00FF0000) >> 16);
+            green = (int)((line[xx] & 0x0000FF00) >> 8);
+            blue = (int) (line[xx] & 0x00000FF );
+
+            //storing ARGB values in separate arrays
+            *(alpha_row+yy*info->stride/4+xx) = alpha;
+            *(red_row+yy*info->stride/4+xx) = red;
+            *(green_row+yy*info->stride/4+xx) = green;
+            *(blue_row+yy*info->stride/4+xx) = blue;
+
+        }
+
+        pixels = (char*)pixels + info->stride;
+    }
+    LOGD("done reading");
+    int *qR = new int [W*H] ; int *qG= new int [W*H]; int *qB= new int [W*H];
+    pixels = (void*) out_pixels;
+    //Computing average in each column for given radius
+    for(y=0; y<W; y++) {
+        for (x = 0; x < H; x++) {
+            qR[x*W+y] = 0;
+            qG[x*W+y] = 0;
+            qB[x*W+y] = 0;
+            for (int r = -rad; r <= rad; r++) {
+                if ((x + r) >= 0 && (x + r) < H) {
+                    qR[x*W+y] += red_row[((x + r)*W)+y];//*(red_row+((x + r)*4)+y);
+                    qG[x*W+y] += *(green_row+((x + r)*W)+y);
+                    qB[x*W+y] += *(blue_row+((x + r)*W)+y);
+                }
+            }
+            qR[x*W+y] /= rows;
+            qG[x*W+y] /= rows;
+            qB[x*W+y] /= rows;
+        }
+    }
+    LOGD("done compute");
+    //Storing computed values back into the original pixel location in bitmap
+    for(yy = 0; yy < info->height; yy++){
+        line = (uint32_t*)out_pixels;
+        for(xx =0; xx < info->width; xx++){
+            // set the new pixel back in bitmap
+            line[xx] =
+                    (((*(alpha_row+yy*info->stride/4+xx)) << 24) & 0xFF000000) |
+                    ((qR[yy*info->stride/4+xx] << 16) & 0x00FF0000) |
+                    ((qG[yy*info->stride/4+xx] << 8) & 0x0000FF00) |
+                    (qB[yy*info->stride/4+xx] & 0x000000FF);
+        }
+
+        out_pixels = out_pixels + info->stride/4;
+    }
+    LOGD("Finished with MotionBlur");
+}
+
+/**
+ * Native method which is called to initiate the motion blur transform
+ * @param env :  the JNI interface pointer. A pointer to a structure storing all JNI function pointers
+ * @param obj : Java class object or NULL if an error occurs
+ * @param bitmap : bitmap object of the input image
+ * @param a0 : integer which represents the direction of blur
+ *              0 = Horizontal ; 1 = Vertical
+ * @param a1 : integer which holds the radius for transform
+ * @return void
+ */
+JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_motionblurndk(JNIEnv * env, jobject  obj, jobject bitmap, jint a0, jint a1)
 {
     LOGD("reading bitmap info...");
     AndroidBitmapInfo  info;
     int ret, i;
     void* pixels;
 
+    //fill out the AndroidBitmapInfo struct for given bitmap
     if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
         LOGE("AndroidBitmap_getInfo() failed ! error=%d", ret);
         return bitmap;
     }
+
+    //verifying the format of the pixels stored in bitmap
     if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
         LOGE("Bitmap format is not RGBA_8888 !");
         return bitmap;
     }
 
+    //obtain the pixel values from the bitamp and attempt to lock the pixel address.
+    // Locking will ensure that the memory for the pixels will not move until the unlockPixels call.
     if ((ret = AndroidBitmap_lockPixels(env, bitmap, &pixels)) < 0) {
         LOGE("AndroidBitmap_lockPixels() failed ! error=%d", ret);
     }
     LOGD("int args : %d %d ",a0, a1);
-
+    LOGD("pixels in jni : %d %p ",*(uint32_t*)pixels, &pixels);
     if(a0 == 0){
+        //calling method to do Horizontal blur
         getHorizontal(&info, pixels, a1);
     }else if(a0 == 1){
+        //calling method to do Vertical blur
         getVertical(&info, pixels, a1);
     }
-
+    LOGD("pixels in jni : %d %p ",*(uint32_t*)pixels, &pixels);
+    //Call to balance a successful call to AndroidBitmap_lockPixels.
+    // after this time the address of the pixels should no longer be used.
     AndroidBitmap_unlockPixels(env, bitmap);
 
+    //return bitmap which is transformed using motion blur
     return bitmap;
 }
 

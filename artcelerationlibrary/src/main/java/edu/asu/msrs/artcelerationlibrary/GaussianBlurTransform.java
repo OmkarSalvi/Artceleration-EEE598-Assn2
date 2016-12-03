@@ -202,13 +202,8 @@ public class GaussianBlurTransform implements Runnable {
         //call method which will do all the computations for gaussian blur
         Bitmap OutBmp = doGaussianBlur(radius, sigma, Inbmp);
 
-        //Bitmap OutBmp = Inbmp;
-
-        //Log.d(TAG, "output W : "+OutBmp.getWidth()+" | H: "+OutBmp.getHeight());
-
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         OutBmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
-        //Inbmp.compress(Bitmap.CompressFormat.PNG, 100, stream);
         byte[] byteArray = stream.toByteArray();
 
         int what;

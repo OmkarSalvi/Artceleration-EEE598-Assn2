@@ -18,10 +18,8 @@ extern "C" {
  */
 JNIEXPORT jstring JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_getMessageFromJNI
   (JNIEnv *, jclass);
-JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_rotateBitmapCcw90
-        (JNIEnv * , jobject , jobject );
 JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_colorfilterndk(JNIEnv * , jobject  , jobject , jintArray );
-JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_motionblurneon(JNIEnv * , jobject  , jobject , jint , jint );
+JNIEXPORT jobject JNICALL Java_edu_asu_msrs_artcelerationlibrary_NativeClass_motionblurndk(JNIEnv * , jobject  , jobject , jint , jint );
 
 
 #ifdef __cplusplus

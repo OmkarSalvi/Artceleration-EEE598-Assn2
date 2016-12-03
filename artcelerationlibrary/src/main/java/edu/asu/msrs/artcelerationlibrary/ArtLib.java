@@ -209,7 +209,7 @@ public class ArtLib {
         TransformTest[] transforms = new TransformTest[5];
         transforms[0]=new TransformTest(0, new int[]{10}, new float[]{5.0f});
         transforms[1]=new TransformTest(1, new int[]{}, new float[]{10.0f, 2.0f});
-        transforms[2]=new TransformTest(2, new int[]{32,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255}, new float[]{});
+        transforms[2]=new TransformTest(2, new int[]{0,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255,0,128,64,160,128,192,192,255}, new float[]{});
         transforms[3]=new TransformTest(3, new int[]{1,10}, new float[]{});
         transforms[4]=new TransformTest(4, new int[]{2}, new float[]{10.0f});
         return transforms;

@@ -13,6 +13,5 @@ import android.graphics.Bitmap;
 public class NativeClass {
     public native static String getMessageFromJNI();
     public native static Bitmap colorfilterndk(Bitmap bmp, int arr[]);
-    public native static Bitmap motionblurneon(Bitmap bmp, int temp0, int temp1);
-    public native static Bitmap rotateBitmapCcw90(Bitmap bitmap);
+    public native static Bitmap motionblurndk(Bitmap bmp, int temp0, int temp1);
 }

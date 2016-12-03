@@ -1,7 +1,5 @@
 /**
  * This service creates different transform threads on the basis of transform type
- * For checkpoint-1, we have just created one transform class i.e GaussianBlurTransform
- * GaussianBlurTransform will process all threads
  */
 
 package edu.asu.msrs.artcelerationlibrary;
@@ -54,7 +52,6 @@ public class MyArtTransService extends Service {
             /**
              * Creation of threads depending on transform types i.e. index
              * For example, if the index passed is 0 then GaussianBlurTransform is implemented by creating thread of same class
-             * For checkpoint-1, only GaussianBlurTransform is implemented
              * Different classes will be created for various transform defined in the transform array in library
              */
             switch(objMessage.what){
