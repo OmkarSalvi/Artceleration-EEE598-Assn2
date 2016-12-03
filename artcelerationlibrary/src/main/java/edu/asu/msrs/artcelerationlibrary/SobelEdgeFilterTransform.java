@@ -1,6 +1,10 @@
 /**
- * This class performs the necessary transform requested from service
+ * This class performs the sobel edge transform requested from service
  * For now, the same image is returned to the library to verify communication process
+ * The transformed image is obtained depending on the parameter sent from the service
+ * If the option(a0)= 0, then image is tranfromed in horizontal direction
+ * If the option(a0)= 1, then image is tranfromed in vertical direction
+ * If the option(a0)= 2, then image is tranfromed in both X and Y direction
  */
 package edu.asu.msrs.artcelerationlibrary;
 
@@ -34,9 +38,25 @@ public class SobelEdgeFilterTransform implements Runnable {
     Bundle serviceDataBundle;
     int req;
     Messenger messengerGBT;
+    /**
+     * Static variables to define the option sent from library
+     */
     static final int OPTION_0 = 0;
     static final int OPTION_1 = 1;
     static final int OPTION_2 = 2;
+    /**
+     * Filters used to highlight horizontal and vertical edges
+     */
+    int[][] SobelX = new int[][]{
+            {-1, 0, 1},
+            {-2, 0, 2},
+            {-1, 0, 1}
+    };
+    int[][] SobelY = new int[][]{
+            {-1, -2, -1},
+            {0, 0, 0},
+            {1, 2, 1}
+    };
 
     /**
      * Constructor to initialize class variables
@@ -70,9 +90,7 @@ public class SobelEdgeFilterTransform implements Runnable {
          */
         int OPTION = intArgs[0];
         float sigma = floatArgs[0];
-        Log.d(TAG, "selectedOperation : " + OPTION);
-        Log.d(TAG, "sigma : " + sigma);
-        //OPTION = 0;
+        //Log.d(TAG, "SelectedOperation : " + OPTION);
 
         /**
          * Storing the byte array received in the buffer
@@ -86,50 +104,36 @@ public class SobelEdgeFilterTransform implements Runnable {
 
         BitmapFactory.Options opts = new BitmapFactory.Options();
         Bitmap srcImg = BitmapFactory.decodeByteArray(buffer, 0, buffer.length, opts);
-
-        int[][] matrixSobelX = new int[][]{
-                {1, 0, -1},
-                {2, 0, -2},
-                {1, 0, -1}
-        };
-        int[][] matrixSobelY = new int[][]{
-                {-1, -2, -1},
-                {0, 0, 0},
-                {1, 2, 1}
-        };
-
-        int eachPixel, alpha, red, blue, green, srcImgWidth, srcImgHeight, x, y,gray;
+        int eachPixel, alpha, red, blue, green, srcImgWidth, srcImgHeight, x, y;
         srcImgWidth = srcImg.getWidth();
         srcImgHeight = srcImg.getHeight();
+        /**
+         * Create a grayscale brightness image
+         */
         Bitmap grayBmp = srcImg.copy(Bitmap.Config.ARGB_8888, true);
-
-        // scan through every single pixel
+        /**
+         * Scan through every single pixel
+         */
         for (x = 0; x < srcImgWidth; x++) {
             for (y = 0; y < srcImgHeight; y++) {
-                // get one pixel color
+
+                /**
+                 * Get one pixel color
+                 * Retrieve color of all channels
+                 * Compute the overall gradient magnitude
+                 */
                 eachPixel = srcImg.getPixel(x, y);
-                // retrieve color of all channels
                 alpha = Color.alpha(eachPixel);
                 red = Color.red(eachPixel);
                 green = Color.green(eachPixel);
                 blue = Color.blue(eachPixel);
-                // take conversion up to one single value
-                // gray = (int) ((0.2989 * red) + (0.5870 * green) + (0.1140 * blue));
-
                 red = (int) ((0.2989 * red));
                 green = (int) ((0.5870 * green));
                 blue = (int) ((0.1140 * blue));
-
-                int var = red+green+blue;//this is changed
-                /// set new pixel color to output bitmap
-
-                //Log.d(TAG, "gray: "+String.valueOf(gray));
-                //grayBmp.setPixel(x, y, Color.argb(255, gray, gray, gray));
-                grayBmp.setPixel(x, y, Color.argb(255, var, var, var));//this is changed
-
+                int temp = red + green +blue;
+                grayBmp.setPixel(x, y, Color.argb(255, temp, temp, temp));
             }
         }
-
 
         Bitmap sobelBitmap;
         switch (OPTION) {
@@ -150,20 +154,8 @@ public class SobelEdgeFilterTransform implements Runnable {
 
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
         sobelBitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
-        //grayBmp.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
-
         byte[] byteStreamArray = byteStream.toByteArray();
-
-        Log.d(TAG,"sobelBmp length is :"+String.valueOf(byteStreamArray.length));
-
-        /**
-         * For future use
-         * Create Bitmap using the stored byte array
-         */
-        /*
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        Bitmap bmp = BitmapFactory.decodeByteArray(buffer, 0, buffer.length, options);
-        */
+        Log.d(TAG,"SobelBmp length is :"+String.valueOf(byteStreamArray.length));
         int what;
         try {
             /**
@@ -191,45 +183,49 @@ public class SobelEdgeFilterTransform implements Runnable {
         }
     }
 
+    @SuppressLint("LongLogTag")
     public Bitmap getGrad(Bitmap grayBmp, int bitOption){
 
         int srcGrayImgWidth, srcGrayImgHeight, gradX = 0, gradY = 0, grad = 0;
-
         srcGrayImgWidth = grayBmp.getWidth();
         srcGrayImgHeight = grayBmp.getHeight();
         Bitmap sobelBmp = grayBmp.copy(Bitmap.Config.ARGB_8888, true);
-
+        /**
+         * If a0 = 0, the output image channels should contain Grx.
+         * If a0 = 1, the output image channels should contain Gry.
+         * If a0 = 2, the output image channels should contain Gr.
+         *
+         */
         for (int x = 1; x < srcGrayImgWidth - 2; x++) {
             for (int y = 1; y < srcGrayImgHeight - 2; y++) {
-
+                /**
+                 * If the transform is obtained in X direction
+                 */
                 if(bitOption != 1 ){
                     gradX = (-1 * Color.green(grayBmp.getPixel(x - 1, y - 1)))+ (-2*Color.green(grayBmp.getPixel(x , y - 1))) + (-1*Color.green(grayBmp.getPixel(x + 1, y - 1))) +
                             (Color.green(grayBmp.getPixel(x - 1, y + 1))) + (2*Color.green(grayBmp.getPixel(x , y + 1)))+(Color.green(grayBmp.getPixel(x + 1, y + 1)));
                     grad = gradX;
                 }
-
+                /**
+                 * If the transform is obtained in Y direction
+                 */
                 if(bitOption != 0 ){
                     gradY = (-1 * Color.green(grayBmp.getPixel(x - 1, y - 1)))  + Color.green(grayBmp.getPixel(x + 1, y - 1)) +
                             (-2 * Color.green(grayBmp.getPixel(x - 1, y )))  + ( 2* Color.green(grayBmp.getPixel(x + 1, y ))) +
                             (-1 * Color.green(grayBmp.getPixel(x - 1, y +1)))  + (Color.green(grayBmp.getPixel(x + 1, y+1 )));
                     grad = gradY;
                 }
-
+                /**
+                 * If the transform is obtained in both directions
+                 */
                 if(bitOption == 2){
                     grad = (int) Math.sqrt((gradX * gradX)+(gradY * gradY));
                 }
-                //Log.d(TAG, "x:"+x +" y:"+y+" "+String.valueOf(gradX));
-
-               /*
-               if(grad < 0){
-                    grad = 0;
-               }
-               if(grad > 255){
-                    grad = 255;
-                }
-                */
-                //Log.d(TAG, "x:"+x +" y:"+y+" "+String.valueOf(grad));
-
+                //Log.d(TAG, "Final gradient value: "+String.valueOf(grad));
+                /**
+                 * Taking only the absolute values in order to reduce yellow pixels
+                 */
+                grad=Math.abs(grad);
                 sobelBmp.setPixel(x,y,Color.argb(255, grad, grad, grad));
             }
         }
