@@ -1,0 +1,99 @@
+/**
+ * This service creates different transform threads on the basis of transform type
+ */
+
+package edu.asu.msrs.artcelerationlibrary;
+
+import android.app.Service;
+import android.content.Intent;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.util.Log;
+
+/*This service will operate depending on messenegr*/
+
+public class MyArtTransService extends Service {
+
+    public MyArtTransService() {
+    }
+    String TAG = "MyArtTransService";
+    /**
+     * Options to select transform
+     */
+    static final int OPTION_0 = 0;
+    static final int OPTION_1 = 1;
+    static final int OPTION_2 = 2;
+    static final int OPTION_3 = 3;
+    static final int OPTION_4 = 4;
+
+    /**
+     * Messenger object to Handle messages that come in from library
+     */
+    final Messenger objMessenger = new Messenger(new MyArtTransServiceHandler());
+
+    /**
+     * Handler class to implement operations on the message received from the Art library
+     */
+    class MyArtTransServiceHandler extends Handler{
+        /**
+         * Helper to handle messages received from library
+         * @param objMessage: Message object received from Library
+         */
+        @Override
+        public void handleMessage(Message objMessage){
+            /**
+             * Logging message variables for debugging
+             */
+            Log.d(TAG,"MyArtTransServiceHandler handleMessage" + objMessage.what);
+            Log.d(TAG,"Length inside Service: "+ objMessage.arg1);
+            Log.d(TAG,"objmessage : "+ objMessage.what);
+            /**
+             * Creation of threads depending on transform types i.e. index
+             * For example, if the index passed is 0 then GaussianBlurTransform is implemented by creating thread of same class
+             * Different classes will be created for various transform defined in the transform array in library
+             */
+            switch(objMessage.what){
+                case OPTION_0:
+                    Log.d(TAG, "OPTION_0");
+                    GaussianBlurTransform objGBT0 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    new Thread(objGBT0).start();
+                    break;
+                case OPTION_1:
+                    Log.d(TAG, "OPTION_1");
+                    GaussianBlurTransform objGBT1 = new GaussianBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    UnsharpMaskTransform objUSM1 = new UnsharpMaskTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo, objGBT1);
+                    new Thread(objUSM1).start();
+                    break;
+                case OPTION_2:
+                    Log.d(TAG, "OPTION_2");
+                    ColorFilterTransform objCFT = new ColorFilterTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    new Thread(objCFT).start();
+                    break;
+                case OPTION_3:
+                    Log.d(TAG, "OPTION_3");
+                    MotionBlurTransform objGBT3 = new MotionBlurTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    new Thread(objGBT3).start();
+                    break;
+                case OPTION_4:
+                    Log.d(TAG, "OPTION_4");
+                    SobelEdgeFilterTransform objGBT4 = new SobelEdgeFilterTransform(objMessage.arg1, objMessage.getData(), objMessage.arg2, objMessage.replyTo);
+                    new Thread(objGBT4).start();
+                    break;
+                default:
+                    Log.d(TAG, "Invalid Transform!!");
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        /**
+         * Return the communication channel to the service when someone binds
+         */
+        return objMessenger.getBinder();
+    }
+}
+

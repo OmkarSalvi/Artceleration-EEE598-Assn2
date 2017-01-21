@@ -43,14 +43,12 @@ public class MainViewer extends AppCompatActivity {
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
         src_img = BitmapFactory.decodeResource(getResources(), R.drawable.asuhayden, opts);
-
-
         spinner = (Spinner) findViewById(R.id.spinner);
         status1 = (TextView) findViewById(R.id.statusText1);
         status2 = (TextView) findViewById(R.id.statusText2);
         artview = (ArtView) findViewById(R.id.artView);
 
-        artlib = new ArtLib();
+        artlib = new ArtLib(this);
 
         artlib.registerHandler(new TransformHandler() {
             @Override
